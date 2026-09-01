@@ -116,10 +116,14 @@ src/
 └── main.tsx
 ```
 
-## Responsáveis principais
+## Membros do Projeto
 
-- **Integrante 1:** frontend, componentes, páginas e responsividade;
-- **Integrante 2:** dashboard, gráficos, filtros e integração com a API.
+- **Integrante 1:** Arthur Filipe 
+- **Integrante 2:** Filipe Xavier
+- **Integrante 2:** Igor Alves
+- **Integrante 2:** Matheus Alves
+- **Integrante 2:** Maria Clara Moutinho
+- **Integrante 2:** Maria Eduarda 
 
 Os demais integrantes também deverão:
 
