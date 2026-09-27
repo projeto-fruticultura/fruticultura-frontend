@@ -49,7 +49,7 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
+    --background: oklch(0.99 0.005 145);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
@@ -120,11 +120,67 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
-  body {
-    @apply bg-background text-foreground;
-    }
+  }
+
   html {
     @apply font-sans;
-    }
+    min-width: 320px;
+    background: #f6faf7;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    min-width: 320px;
+    min-height: 100dvh;
+    margin: 0;
+  }
+
+  body, #root {
+    width: 100%;
+    min-height: 100dvh;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  ::selection {
+    background: rgb(0 155 77 / 18%);
+  }
+}
+
+@layer components {
+  .input-propriedade {
+    width: 100%;
+    min-height: 3rem;
+    border: 1px solid #d5ded8;
+    border-radius: 0.75rem;
+    background: #fff;
+    padding: 0 0.9rem;
+    font-size: 0.9375rem;
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+
+  .input-propriedade:hover {
+    border-color: #b8c6bd;
+  }
+
+  .input-propriedade:focus-visible {
+    border-color: #009B4D;
+    box-shadow: 0 0 0 4px rgb(0 155 77 / 10%);
+  }
+
+  .input-propriedade[aria-invalid='true'] {
+    border-color: #f87171;
+  }
 }
