@@ -1,139 +1,121 @@
-# ValeSafra Frontend
+# ValeSafra — Frontend PWA
 
-Frontend web da plataforma **ValeSafra**, desenvolvido com React, TypeScript e Vite.
+Frontend responsivo da plataforma ValeSafra, desenvolvido em React, Vite e TypeScript.
 
-Esta versão contém a refatoração visual mais recente do projeto, com foco em comportamento de aplicação web, responsividade, acessibilidade e consistência de UX/UI.
+## Principais recursos
 
-## Tecnologias
-
-- React 19
-- TypeScript
-- Vite
-- React Router
-- Tailwind CSS
-- Lucide React
-- Context API para autenticação
-
-## Implementações disponíveis
-
-- Home pública responsiva;
-- Login integrado à API;
+- Home responsiva;
+- Login;
 - Cadastro de produtor;
-- Recuperação de senha;
-- Redefinição de senha;
-- Persistência de sessão/token;
-- Rotas protegidas;
-- CRUD de propriedades;
-- mensagens de erro, sucesso e loading;
-- estados de botão desabilitado/carregando;
-- exibição e ocultação de senha;
-- layout adaptável para desktop, notebook, tablet e smartphone.
-
-## Melhorias visuais mais recentes
-
-A interface deixou de reproduzir rigidamente os screenshots iniciais e passou a seguir um comportamento de site web responsivo.
-
-Foram implementados:
-
-- aproveitamento integral do viewport;
-- remoção das antigas lacunas pretas externas;
-- containers fluidos e limites de largura adequados;
-- uso de Grid e Flexbox responsivos;
-- AuthLayout redesenhado;
-- melhor hierarquia de títulos, textos e ações;
-- formulários com labels, feedback e foco visível;
-- Home pública com hero e cards de recursos;
-- página de Propriedades adaptada para desktop e mobile;
-- tabela em telas grandes e cards em telas menores;
-- modal de propriedades responsivo;
-- melhor tratamento de imagens e backgrounds;
-- footer simplificado, removendo o antigo bloco branco que aparecia no rodapé;
-- melhorias de acessibilidade e navegação por teclado.
+- Recuperação e redefinição de senha;
+- área autenticada;
+- listagem de propriedades;
+- cadastro, detalhes, edição e exclusão lógica de propriedades;
+- navegação responsiva desktop/tablet/mobile;
+- PWA instalável;
+- suporte a manifest e Service Worker;
+- fallback offline para navegação estática;
+- indicação de perda de conexão.
 
 ## Rotas
 
 ```text
-/                         Home pública
-/login                    Login
-/cadastro                 Cadastro
-/esqueci-senha            Recuperação de senha
-/redefinir-senha?token=   Redefinição de senha
-/propriedades             CRUD autenticado de propriedades
+/
+/login
+/cadastro
+/esqueci-senha
+/redefinir-senha
+/propriedades
+/propriedades/nova
+/propriedades/:id
+/propriedades/:id/editar
 ```
 
-## Como executar apenas o Frontend
+As rotas de propriedades exigem autenticação.
 
-No terminal do VS Code, dentro desta pasta:
+## Pré-requisitos
+
+- Node.js 18.18+;
+- npm.
+
+## Instalação
+
+```bash
+npm install
+```
+
+Crie o `.env` a partir do exemplo:
+
+```bash
+cp .env.example .env
+```
+
+PowerShell:
 
 ```powershell
-npm install
 Copy-Item .env.example .env
-npm run dev
 ```
 
-Normalmente o Vite será iniciado em:
-
-```text
-http://localhost:5173
-```
-
-## Conferir somente as telas
-
-Para inspeção visual das páginas públicas, o Backend não precisa estar em execução.
-
-Abra:
-
-```text
-http://localhost:5173/
-http://localhost:5173/login
-http://localhost:5173/cadastro
-http://localhost:5173/esqueci-senha
-http://localhost:5173/redefinir-senha?token=teste
-```
-
-> A rota `/propriedades` é protegida e depende de autenticação válida.
-
-## Configuração da API
-
-Arquivo `.env`:
+Configuração local:
 
 ```env
 VITE_API_URL=http://localhost:3000/api
 ```
 
-Quando o Backend estiver ativo em `localhost:3000`, o Frontend utilizará essa URL para autenticação, cadastro, recuperação de senha e CRUD de propriedades.
+## Desenvolvimento
 
-## Scripts
-
-```powershell
+```bash
 npm run dev
+```
+
+Acesse:
+
+```text
+http://localhost:5173
+```
+
+## Build
+
+```bash
 npm run build
-npm run lint
+```
+
+## Preview / validação de PWA
+
+```bash
 npm run preview
 ```
 
-## Estrutura principal
+Normalmente o Vite disponibiliza:
 
 ```text
-src/
-├── components/
-│   ├── auth/
-│   └── ui/
-├── context/
-├── pages/
-│   ├── Auth/
-│   ├── Home/
-│   └── Propriedades/
-├── routes/
-├── services/
-├── types/
-├── App.tsx
-├── index.css
-└── main.tsx
+http://localhost:4173
 ```
 
-## Observações
+## Backend necessário para operações reais
 
-- Não há `node_modules` no pacote. Execute `npm install` após extrair.
-- Para testar apenas as telas públicas, não é necessário PostgreSQL.
-- Para testar login, cadastro e CRUD, utilize o pacote completo com Backend configurado.
+Para autenticação e CRUD, a API deve estar disponível em `VITE_API_URL` e oferecer:
+
+```text
+POST /api/auth/login
+POST /api/auth/logout
+GET  /api/auth/me
+POST /api/auth/esqueci-senha
+POST /api/auth/redefinir-senha
+POST /api/usuarios
+GET    /api/propriedades
+POST   /api/propriedades
+GET    /api/propriedades/:id
+PUT    /api/propriedades/:id
+DELETE /api/propriedades/:id
+```
+
+## PWA e offline
+
+A interface pode ser instalada como aplicativo em navegadores compatíveis. Em produção, publique o frontend em HTTPS.
+
+Operações que alteram dados — login, cadastro, criação, edição e exclusão — não são executadas offline. Essa decisão evita conflitos e inconsistências sem uma estratégia explícita de sincronização.
+
+## Segurança
+
+O token de sessão é mantido no `sessionStorage`. Não coloque segredos ou credenciais reais em variáveis `VITE_*`, pois elas ficam acessíveis no bundle do navegador.

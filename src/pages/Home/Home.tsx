@@ -1,6 +1,7 @@
 import { ArrowRight, ChartNoAxesCombined, Leaf, MapPinned, Sprout } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { PwaInstallButton } from '@/components/ui/PwaInstallButton'
 
 const recursos = [
   {
@@ -36,6 +37,7 @@ export default function Home() {
           </Link>
 
           <nav className="flex items-center gap-2 sm:gap-3" aria-label="Navegação principal">
+            <PwaInstallButton compact className="hidden md:inline-flex" />
             {usuario ? (
               <Link
                 to="/propriedades"
