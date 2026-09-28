@@ -26,10 +26,6 @@ export function AuthField({
 
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="block text-sm font-semibold text-[#27343e]">
-        {label}
-        {required ? <span className="ml-1 text-[#b42318]" aria-hidden="true">*</span> : null}
-      </label>
 
       <div className="relative">
         <input

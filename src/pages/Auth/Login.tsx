@@ -45,9 +45,7 @@ export default function Login() {
   return (
     <AuthLayout>
       <div className="mb-7">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#009B4D]">Acesso à plataforma</p>
-        <h1 className="mt-2 text-[clamp(1.8rem,3vw,2.25rem)] font-semibold tracking-[-0.035em] text-[#14212b]">Entrar no ValeSafra</h1>
-        <p className="mt-3 text-[15px] leading-7 text-[#5f6b75]">Use suas credenciais para acessar a gestão das propriedades e os recursos disponíveis.</p>
+        <h1 className="mt-2 text-[clamp(1.5rem,2.5vw,1.5rem)] font-semibold tracking-[-0.035em] text-[#14212b]">Entrar no ValeSafra</h1>
       </div>
 
       <div className="space-y-4">
@@ -60,7 +58,7 @@ export default function Login() {
           id="login-email"
           label="E-mail"
           type="email"
-          placeholder="nome@exemplo.com"
+          placeholder="Email"
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -70,7 +68,7 @@ export default function Login() {
           id="login-senha"
           label="Senha"
           type="password"
-          placeholder="Digite sua senha"
+          placeholder="Senha"
           autoComplete="current-password"
           value={senha}
           onChange={(event) => setSenha(event.target.value)}
@@ -78,12 +76,6 @@ export default function Login() {
         />
 
         <div className="flex justify-end">
-          <Link
-            to="/esqueci-senha"
-            className="rounded-md text-sm font-semibold text-[#15693E] underline-offset-4 transition hover:text-[#009B4D] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
-          >
-            Esqueceu a senha?
-          </Link>
         </div>
 
         <button
@@ -93,6 +85,15 @@ export default function Login() {
         >
           {enviando ? 'Entrando...' : 'Entrar'}
         </button>
+
+        <div className='flex justify-center'>
+                  <Link
+            to="/esqueci-senha"
+            className="rounded-md text-sm font-semibold text-[#15693E] underline-offset-4 transition hover:text-[#009B4D] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
+          >
+            Esqueceu a senha?
+          </Link>
+          </div>
       </form>
 
       <p className="mt-7 text-center text-sm text-[#69747e]">

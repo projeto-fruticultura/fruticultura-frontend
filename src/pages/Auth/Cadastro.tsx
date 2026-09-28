@@ -54,7 +54,6 @@ export default function Cadastro() {
   return (
     <AuthLayout>
       <div className="mb-7">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#009B4D]">Novo acesso</p>
         <h1 className="mt-2 text-[clamp(1.8rem,3vw,2.25rem)] font-semibold tracking-[-0.035em] text-[#14212b]">Criar conta</h1>
         <p className="mt-3 text-[15px] leading-7 text-[#5f6b75]">Cadastre-se como produtor para começar a utilizar os recursos disponíveis no ValeSafra.</p>
       </div>
@@ -65,7 +64,7 @@ export default function Cadastro() {
         <AuthField
           id="cadastro-nome"
           label="Nome completo"
-          placeholder="Seu nome completo"
+          placeholder="Nome completo"
           autoComplete="name"
           value={nome}
           onChange={(event) => setNome(event.target.value)}
@@ -76,7 +75,7 @@ export default function Cadastro() {
           id="cadastro-email"
           label="E-mail"
           type="email"
-          placeholder="nome@exemplo.com"
+          placeholder="Email"
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -87,7 +86,7 @@ export default function Cadastro() {
           id="cadastro-senha"
           label="Senha"
           type="password"
-          placeholder="Crie uma senha"
+          placeholder="Senha"
           autoComplete="new-password"
           value={senha}
           onChange={(event) => setSenha(event.target.value)}

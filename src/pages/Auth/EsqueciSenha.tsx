@@ -44,7 +44,6 @@ export default function EsqueciSenha() {
       </Link>
 
       <div className="mb-7">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#009B4D]">Recuperação de acesso</p>
         <h1 className="mt-2 text-[clamp(1.8rem,3vw,2.25rem)] font-semibold tracking-[-0.035em] text-[#14212b]">Esqueceu sua senha?</h1>
         <p className="mt-3 text-[15px] leading-7 text-[#5f6b75]">Informe o e-mail cadastrado. Se a conta estiver disponível, você receberá as instruções para criar uma nova senha.</p>
       </div>
