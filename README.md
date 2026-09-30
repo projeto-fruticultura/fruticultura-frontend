@@ -1,32 +1,121 @@
-# React + TypeScript + Vite
+# ValeSafra — Frontend PWA
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Frontend responsivo da plataforma ValeSafra, desenvolvido em React, Vite e TypeScript.
 
-Currently, two official plugins are available:
+## Principais recursos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Home responsiva;
+- Login;
+- Cadastro de produtor;
+- Recuperação e redefinição de senha;
+- área autenticada;
+- listagem de propriedades;
+- cadastro, detalhes, edição e exclusão lógica de propriedades;
+- navegação responsiva desktop/tablet/mobile;
+- PWA instalável;
+- suporte a manifest e Service Worker;
+- fallback offline para navegação estática;
+- indicação de perda de conexão.
 
-## React Compiler
+## Rotas
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```text
+/
+/login
+/cadastro
+/esqueci-senha
+/redefinir-senha
+/propriedades
+/propriedades/nova
+/propriedades/:id
+/propriedades/:id/editar
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+As rotas de propriedades exigem autenticação.
+
+## Pré-requisitos
+
+- Node.js 18.18+;
+- npm.
+
+## Instalação
+
+```bash
+npm install
+```
+
+Crie o `.env` a partir do exemplo:
+
+```bash
+cp .env.example .env
+```
+
+PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Configuração local:
+
+```env
+VITE_API_URL=http://localhost:3000/api
+```
+
+## Desenvolvimento
+
+```bash
+npm run dev
+```
+
+Acesse:
+
+```text
+http://localhost:5173
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Preview / validação de PWA
+
+```bash
+npm run preview
+```
+
+Normalmente o Vite disponibiliza:
+
+```text
+http://localhost:4173
+```
+
+## Backend necessário para operações reais
+
+Para autenticação e CRUD, a API deve estar disponível em `VITE_API_URL` e oferecer:
+
+```text
+POST /api/auth/login
+POST /api/auth/logout
+GET  /api/auth/me
+POST /api/auth/esqueci-senha
+POST /api/auth/redefinir-senha
+POST /api/usuarios
+GET    /api/propriedades
+POST   /api/propriedades
+GET    /api/propriedades/:id
+PUT    /api/propriedades/:id
+DELETE /api/propriedades/:id
+```
+
+## PWA e offline
+
+A interface pode ser instalada como aplicativo em navegadores compatíveis. Em produção, publique o frontend em HTTPS.
+
+Operações que alteram dados — login, cadastro, criação, edição e exclusão — não são executadas offline. Essa decisão evita conflitos e inconsistências sem uma estratégia explícita de sincronização.
+
+## Segurança
+
+O token de sessão é mantido no `sessionStorage`. Não coloque segredos ou credenciais reais em variáveis `VITE_*`, pois elas ficam acessíveis no bundle do navegador.
