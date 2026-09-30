@@ -12,6 +12,8 @@ import NovaPropriedade from '@/pages/Propriedades/NovaPropriedade'
 import Propriedades from '@/pages/Propriedades/Propriedades'
 import Culturas from '@/pages/Culturas/Culturas'
 import NovaCultura from '@/pages/Culturas/NovaCultura'
+import Sensores from '@/pages/Sensores/Sensores'
+import NovoSensor from '@/pages/Sensores/NovoSensor'
 
 export function AppRoutes() {
   return (
@@ -31,6 +33,8 @@ export function AppRoutes() {
             <Route path="/propriedades/:id/editar" element={<EditarPropriedade />} />
             <Route path="/culturas" element={<Culturas />} />
             <Route path="/culturas/nova" element={<NovaCultura />} />
+            <Route path="/sensores" element={<Sensores />} />
+            <Route path="/sensores/novo" element={<NovoSensor />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

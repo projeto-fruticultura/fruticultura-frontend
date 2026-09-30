@@ -164,21 +164,12 @@ export default function NovaCultura() {
             </div>
 
             <div className="mt-8 flex flex-col-reverse gap-3 border-t border-[#edf1ee] pt-6 sm:flex-row sm:justify-end">
-
-              <Link
-                to="/culturas"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#dce5df] bg-white px-5 text-sm font-semibold text-[#425147] transition hover:bg-[#f4f8f5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
-              >
-                <ArrowLeft size={17} aria-hidden="true" />
-                Voltar
-              </Link>
-
               <button
                 type="submit"
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#009B4D] px-5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(0,155,77,.16)] transition hover:bg-[#008844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/20"
               >
                 <Save size={17} aria-hidden="true" />
-                Cadastrar
+                Cadastrar cultura
               </button>
 
             </div>

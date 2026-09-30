@@ -6,13 +6,14 @@ import { PwaInstallButton } from '@/components/ui/PwaInstallButton'
 
 interface AppShellProps {
   children: ReactNode
-  section?: 'overview' | 'properties' | 'culturas'
+  section?: 'overview' | 'properties' | 'culturas' | 'sensores'
 }
 
 const navItems = [
   { label: 'Visão geral', to: '/', icon: LayoutDashboard, key: 'overview' as const },
   { label: 'Propriedades', to: '/propriedades', icon: Leaf, key: 'properties' as const },
   { label: 'Culturas', to: '/culturas', icon: Sprout, key: 'culturas' as const },
+  { label: 'Sensores', to: '/sensores', icon: Cpu, key: 'sensores' as const },
 ]
 
 function formatCurrentDate() {
@@ -82,11 +83,6 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
         ))}
 
         <div className="mt-4 border-t border-white/10 pt-4">
-          <div className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-white/45" aria-disabled="true">
-            <Cpu size={18} aria-hidden="true" />
-            <span className="flex-1">Sensores</span>
-            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">Em breve</span>
-          </div>
           <div className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-white/45" aria-disabled="true">
             <ChartNoAxesCombined size={18} aria-hidden="true" />
             <span className="flex-1">Dados de Mercado</span>
