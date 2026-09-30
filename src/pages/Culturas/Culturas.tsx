@@ -20,7 +20,7 @@ export default function Culturas() {
   ]
 
   return (
-    <AppShell section="cultures">
+    <AppShell section="culturas">
       <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8 xl:px-10">
 
         <section className="overflow-hidden rounded-[24px] border border-[#e1e7e3] bg-white shadow-sm">

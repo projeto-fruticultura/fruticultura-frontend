@@ -6,7 +6,7 @@ import { PwaInstallButton } from '@/components/ui/PwaInstallButton'
 
 interface AppShellProps {
   children: ReactNode
-  section?: 'overview' | 'properties' | 'cultures' | 'culturas'
+  section?: 'overview' | 'properties' | 'culturas'
 }
 
 const navItems = [
