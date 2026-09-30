@@ -1,4 +1,4 @@
-import { Bell, ChevronRight, Cpu, LayoutDashboard, Leaf, LogOut, Menu, Sprout, X } from 'lucide-react'
+import { Bell, ChevronRight, Cpu, LayoutDashboard, Leaf, LogOut, Menu, Sprout, X, ChartNoAxesCombined } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
@@ -6,12 +6,13 @@ import { PwaInstallButton } from '@/components/ui/PwaInstallButton'
 
 interface AppShellProps {
   children: ReactNode
-  section?: 'overview' | 'properties'
+  section?: 'overview' | 'properties' | 'cultures' | 'culturas'
 }
 
 const navItems = [
   { label: 'Visão geral', to: '/', icon: LayoutDashboard, key: 'overview' as const },
   { label: 'Propriedades', to: '/propriedades', icon: Leaf, key: 'properties' as const },
+  { label: 'Culturas', to: '/culturas', icon: Sprout, key: 'culturas' as const },
 ]
 
 function formatCurrentDate() {
@@ -82,13 +83,13 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
 
         <div className="mt-4 border-t border-white/10 pt-4">
           <div className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-white/45" aria-disabled="true">
-            <Sprout size={18} aria-hidden="true" />
-            <span className="flex-1">Culturas</span>
+            <Cpu size={18} aria-hidden="true" />
+            <span className="flex-1">Sensores</span>
             <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">Em breve</span>
           </div>
           <div className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-white/45" aria-disabled="true">
-            <Cpu size={18} aria-hidden="true" />
-            <span className="flex-1">Sensores</span>
+            <ChartNoAxesCombined size={18} aria-hidden="true" />
+            <span className="flex-1">Dados de Mercado</span>
             <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">Em breve</span>
           </div>
         </div>

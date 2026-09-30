@@ -10,6 +10,8 @@ import DetalhePropriedade from '@/pages/Propriedades/DetalhePropriedade'
 import EditarPropriedade from '@/pages/Propriedades/EditarPropriedade'
 import NovaPropriedade from '@/pages/Propriedades/NovaPropriedade'
 import Propriedades from '@/pages/Propriedades/Propriedades'
+import Culturas from '@/pages/Culturas/Culturas'
+import NovaCultura from '@/pages/Culturas/NovaCultura'
 
 export function AppRoutes() {
   return (
@@ -27,6 +29,8 @@ export function AppRoutes() {
             <Route path="/propriedades/nova" element={<NovaPropriedade />} />
             <Route path="/propriedades/:id" element={<DetalhePropriedade />} />
             <Route path="/propriedades/:id/editar" element={<EditarPropriedade />} />
+            <Route path="/culturas" element={<Culturas />} />
+            <Route path="/culturas/nova" element={<NovaCultura />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
