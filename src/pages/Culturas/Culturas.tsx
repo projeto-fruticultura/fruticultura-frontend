@@ -97,12 +97,12 @@ export default function Culturas() {
                       Editar
                     </button>
 
-                    <button
-                      type="button"
+                    <Link
+                      to={`/culturas/${cultura.id}`}
                       className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#42C78A] bg-white px-4 text-sm font-semibold text-[#0B8A51] transition hover:bg-[#EFFCF5]"
                     >
                       Ver detalhes
-                    </button>
+                    </Link>
 
                   </div>
 
