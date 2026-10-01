@@ -72,7 +72,7 @@ export default function DetalhePropriedade() {
                 <Link to={`/propriedades/${item.id}/editar`} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#d8e3dc] bg-white px-4 text-sm font-semibold text-[#15693E] transition hover:bg-[#f1f8f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]">
                   <Edit3 size={17} /> Editar
                 </Link>
-                <button type="button" onClick={() => void remove()} disabled={deleting} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-100 bg-white px-4 text-sm font-semibold text-red-600 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-50">
+                <button type="button" onClick={() => void remove()} disabled={deleting} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-100 bg-white px-4 text-sm font-semibold text-red-600 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-50 cursor-pointer">
                   <Trash2 size={17} /> {deleting ? 'Excluindo...' : 'Excluir'}
                 </button>
               </div>

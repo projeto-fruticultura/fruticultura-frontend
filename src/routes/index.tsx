@@ -12,9 +12,10 @@ import NovaPropriedade from "@/pages/Propriedades/NovaPropriedade";
 import Propriedades from "@/pages/Propriedades/Propriedades";
 import Culturas from "@/pages/Culturas/Culturas";
 import NovaCultura from "@/pages/Culturas/NovaCultura";
+import DetalheCultura from "@/pages/Culturas/DetalheCultura";
+import EditarCultura from "@/pages/Culturas/EditarCultura";
 import Sensores from "@/pages/Sensores/Sensores";
 import NovoSensor from "@/pages/Sensores/NovoSensor";
-import DetalheCultura from "@/pages/Culturas/DetalheCultura";
 
 export function AppRoutes() {
   return (
@@ -40,6 +41,7 @@ export function AppRoutes() {
             <Route path="/sensores" element={<Sensores />} />
             <Route path="/sensores/novo" element={<NovoSensor />} />
             <Route path="/culturas/:id" element={<DetalheCultura />} />
+            <Route path="/culturas/:id/editar" element={<EditarCultura />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
