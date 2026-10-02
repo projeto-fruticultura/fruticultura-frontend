@@ -16,6 +16,7 @@ import DetalheCultura from "@/pages/Culturas/DetalheCultura";
 import EditarCultura from "@/pages/Culturas/EditarCultura";
 import Sensores from "@/pages/Sensores/Sensores";
 import NovoSensor from "@/pages/Sensores/NovoSensor";
+import Dashboard from '@/pages/Dashboard/Dashboard'
 
 export function AppRoutes() {
   return (
@@ -29,6 +30,7 @@ export function AppRoutes() {
           <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 
           <Route element={<ProtectedRoute />}>
+            <Route path="/painel" element={<Dashboard />} />
             <Route path="/propriedades" element={<Propriedades />} />
             <Route path="/propriedades/nova" element={<NovaPropriedade />} />
             <Route path="/propriedades/:id" element={<DetalhePropriedade />} />

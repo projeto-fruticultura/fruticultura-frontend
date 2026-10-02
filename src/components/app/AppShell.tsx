@@ -10,7 +10,7 @@ interface AppShellProps {
 }
 
 const navItems = [
-  { label: 'Visão geral', to: '/', icon: LayoutDashboard, key: 'overview' as const },
+  { label: 'Visão geral', to: '/painel', icon: LayoutDashboard, key: 'overview' as const },
   { label: 'Propriedades', to: '/propriedades', icon: Leaf, key: 'properties' as const },
   { label: 'Culturas', to: '/culturas', icon: Sprout, key: 'culturas' as const },
   { label: 'Sensores', to: '/sensores', icon: Cpu, key: 'sensores' as const },
