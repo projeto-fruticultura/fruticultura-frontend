@@ -17,13 +17,15 @@ import EditarCultura from "@/pages/Culturas/EditarCultura";
 import Sensores from "@/pages/Sensores/Sensores";
 import NovoSensor from "@/pages/Sensores/NovoSensor";
 import Dashboard from '@/pages/Dashboard/Dashboard'
+import Lotes from "@/pages/Lotes/Lotes";
+import NovoLote from "@/pages/Lotes/NovoLote";
 
 export function AppRoutes() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/esqueci-senha" element={<EsqueciSenha />} />
@@ -41,6 +43,8 @@ export function AppRoutes() {
             <Route path="/culturas" element={<Culturas />} />
             <Route path="/culturas/nova" element={<NovaCultura />} />
             <Route path="/sensores" element={<Sensores />} />
+            <Route path="/lotes" element={<Lotes />} />
+            <Route path="/lotes/novo" element={<NovoLote />} />
             <Route path="/sensores/novo" element={<NovoSensor />} />
             <Route path="/culturas/:id" element={<DetalheCultura />} />
             <Route path="/culturas/:id/editar" element={<EditarCultura />} />
