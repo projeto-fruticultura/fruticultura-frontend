@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { AppShell, PageBreadcrumb } from "@/components/app/AppShell";
+import { culturaService } from "@/services/culturaService";
 
 export default function NovaCultura() {
   const navigate = useNavigate();
@@ -18,12 +19,8 @@ export default function NovaCultura() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    const resposta = await fetch("http://localhost:3000/api/culturas", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    try {
+      await culturaService.criar({
         nome,
         variedade,
         descricao,
@@ -31,17 +28,12 @@ export default function NovaCultura() {
         temperaturaMax: Number(temperaturaMax),
         umidadeMin: Number(umidadeMin),
         umidadeMax: Number(umidadeMax),
-      }),
-    });
+      });
 
-    const dados = await resposta.json();
-
-    if (!resposta.ok) {
-      console.error("Erro ao cadastrar cultura:", dados);
-      return;
+      navigate("/culturas");
+    } catch (erro) {
+      console.error("Erro ao cadastrar cultura:", erro);
     }
-
-    navigate("/culturas");
   }
 
   return (

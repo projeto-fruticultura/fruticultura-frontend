@@ -1,126 +1,78 @@
-import { ArrowLeft } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
-import {
-  AppShell,
-  PageBreadcrumb,
-} from '@/components/app/AppShell'
-
-interface Cultura {
-  id: number
-  nome: string
-  variedade: string | null
-  descricao: string | null
-  temperaturaMin: number
-  temperaturaMax: number
-  umidadeMin: number
-  umidadeMax: number
-}
+import { AppShell, PageBreadcrumb } from "@/components/app/AppShell";
+import { culturaService } from "@/services/culturaService";
+import type { Cultura } from "@/types/api";
 
 export default function EditarCultura() {
-  const { id } = useParams()
-  const navigate = useNavigate()
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-  const culturaId = Number(id)
+  const culturaId = Number(id);
 
-  const [nome, setNome] = useState('')
-  const [variedade, setVariedade] = useState('')
-  const [descricao, setDescricao] = useState('')
-  const [temperaturaMin, setTemperaturaMin] = useState('')
-  const [temperaturaMax, setTemperaturaMax] = useState('')
-  const [umidadeMin, setUmidadeMin] = useState('')
-  const [umidadeMax, setUmidadeMax] = useState('')
+  const [nome, setNome] = useState("");
+  const [variedade, setVariedade] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [temperaturaMin, setTemperaturaMin] = useState("");
+  const [temperaturaMax, setTemperaturaMax] = useState("");
+  const [umidadeMin, setUmidadeMin] = useState("");
+  const [umidadeMax, setUmidadeMax] = useState("");
 
-  const [cultura, setCultura] = useState<Cultura | null>(null)
-  const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState('')
+  const [cultura, setCultura] = useState<Cultura | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     if (!Number.isInteger(culturaId) || culturaId <= 0) {
-      setErro('Identificador de cultura inválido.')
-      setCarregando(false)
-      return
+      setErro("Identificador de cultura inválido.");
+      setCarregando(false);
+      return;
     }
 
     async function carregarCultura() {
       try {
-        const resposta = await fetch(
-          `http://localhost:3000/api/culturas/${culturaId}`,
-        )
+        const dados = await culturaService.buscarPorId(culturaId);
 
-        const dados = await resposta.json()
+        setCultura(dados);
 
-        if (!resposta.ok) {
-          setErro(
-            dados?.erro ||
-              dados?.message ||
-              'Não foi possível carregar a cultura.',
-          )
-          return
-        }
-
-        setCultura(dados)
-
-        setNome(dados.nome)
-        setVariedade(dados.variedade ?? '')
-        setDescricao(dados.descricao ?? '')
-        setTemperaturaMin(String(dados.temperaturaMin))
-        setTemperaturaMax(String(dados.temperaturaMax))
-        setUmidadeMin(String(dados.umidadeMin))
-        setUmidadeMax(String(dados.umidadeMax))
+        setNome(dados.nome);
+        setVariedade(dados.variedade ?? "");
+        setDescricao(dados.descricao ?? "");
+        setTemperaturaMin(String(dados.temperaturaMin));
+        setTemperaturaMax(String(dados.temperaturaMax));
+        setUmidadeMin(String(dados.umidadeMin));
+        setUmidadeMax(String(dados.umidadeMax));
       } catch (error) {
-        console.error('Erro ao carregar cultura:', error)
-        setErro('Não foi possível carregar a cultura.')
+        console.error("Erro ao carregar cultura:", error);
+        setErro("Não foi possível carregar a cultura.");
       } finally {
-        setCarregando(false)
+        setCarregando(false);
       }
     }
 
-    carregarCultura()
-  }, [culturaId])
+    carregarCultura();
+  }, [culturaId]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
+    e.preventDefault();
 
     try {
-      const resposta = await fetch(
-        `http://localhost:3000/api/culturas/${culturaId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            nome,
-            variedade,
-            descricao,
-            temperaturaMin: Number(temperaturaMin),
-            temperaturaMax: Number(temperaturaMax),
-            umidadeMin: Number(umidadeMin),
-            umidadeMax: Number(umidadeMax),
-          }),
-        },
-      )
+      await culturaService.atualizar(culturaId, {
+        nome,
+        variedade,
+        descricao,
+        temperaturaMin: Number(temperaturaMin),
+        temperaturaMax: Number(temperaturaMax),
+        umidadeMin: Number(umidadeMin),
+        umidadeMax: Number(umidadeMax),
+      });
 
-      const dados = await resposta.json()
-
-      if (!resposta.ok) {
-        console.error('Erro ao atualizar cultura:', dados)
-
-        setErro(
-          dados?.erro ||
-            dados?.message ||
-            'Não foi possível salvar as alterações.',
-        )
-
-        return
-      }
-
-      navigate(`/culturas/${culturaId}`, { replace: true })
+      navigate(`/culturas/${culturaId}`, { replace: true });
     } catch (error) {
-      console.error('Erro ao atualizar cultura:', error)
-      setErro('Não foi possível salvar as alterações.')
+      console.error("Erro ao atualizar cultura:", error);
+      setErro("Não foi possível salvar as alterações.");
     }
   }
 
@@ -129,12 +81,12 @@ export default function EditarCultura() {
       <div className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8 xl:px-10">
         <PageBreadcrumb
           items={[
-            { label: 'Culturas', to: '/culturas' },
+            { label: "Culturas", to: "/culturas" },
             {
-              label: cultura?.nome || 'Cultura',
+              label: cultura?.nome || "Cultura",
               to: `/culturas/${culturaId}`,
             },
-            { label: 'Editar' },
+            { label: "Editar" },
           ]}
         />
 
@@ -152,8 +104,8 @@ export default function EditarCultura() {
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#68756d]">
-            Atualize as informações de {cultura?.nome || 'sua cultura'} e
-            salve as alterações.
+            Atualize as informações de {cultura?.nome || "sua cultura"} e salve
+            as alterações.
           </p>
         </div>
 
@@ -325,5 +277,5 @@ export default function EditarCultura() {
         )}
       </div>
     </AppShell>
-  )
+  );
 }

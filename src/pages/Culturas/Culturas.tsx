@@ -1,54 +1,44 @@
 import { Eye, Edit3, Plus, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { culturaService } from "@/services/culturaService";
+import type { Cultura } from "@/types/api";
 
 import { AppShell } from "@/components/app/AppShell";
-
-interface Cultura {
-  id: number;
-  nome: string;
-  variedade: string | null;
-  descricao: string | null;
-  temperaturaMin: number;
-  temperaturaMax: number;
-  umidadeMin: number;
-  umidadeMax: number;
-}
 
 export default function Culturas() {
   const [culturas, setCulturas] = useState<Cultura[]>([]);
 
   useEffect(() => {
     async function carregarCulturas() {
-      const resposta = await fetch("http://localhost:3000/api/culturas");
-      const dados = await resposta.json();
-
-      setCulturas(dados);
+      try {
+        const dados = await culturaService.listar();
+        setCulturas(dados);
+      } catch (erro) {
+        console.error("Erro ao carregar culturas:", erro);
+        window.alert("Não foi possível carregar as culturas.");
+      }
     }
 
     carregarCulturas();
   }, []);
 
   async function excluirCultura(id: number) {
-    const resposta = await fetch(`http://localhost:3000/api/culturas/${id}`, {
-      method: "DELETE",
-    });
+    try {
+      await culturaService.remover(id);
 
-    if (!resposta.ok) {
-      const dados = await resposta.json();
-
-      console.error("Erro ao excluir cultura:", dados);
+      setCulturas((culturasAtuais) =>
+        culturasAtuais.filter((cultura) => cultura.id !== id),
+      );
+    } catch (erro) {
+      console.error("Erro ao excluir cultura:", erro);
 
       window.alert(
-        dados?.erro || dados?.message || "Não foi possível excluir a cultura.",
+        erro instanceof Error
+          ? erro.message
+          : "Não foi possível excluir a cultura.",
       );
-
-      return;
     }
-
-    setCulturas((culturasAtuais) =>
-      culturasAtuais.filter((cultura) => cultura.id !== id),
-    );
   }
 
   return (

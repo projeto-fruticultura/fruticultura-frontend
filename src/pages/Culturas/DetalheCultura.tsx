@@ -3,17 +3,8 @@ import { ArrowLeft, Droplets, Leaf, Pencil, Thermometer } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
 import { AppShell, PageBreadcrumb } from "@/components/app/AppShell";
-
-interface Cultura {
-  id: number;
-  nome: string;
-  variedade: string | null;
-  descricao: string | null;
-  temperaturaMin: number;
-  temperaturaMax: number;
-  umidadeMin: number;
-  umidadeMax: number;
-}
+import { culturaService } from "@/services/culturaService";
+import type { Cultura } from "@/types/api";
 
 export default function DetalheCultura() {
   const { id } = useParams();
@@ -24,19 +15,16 @@ export default function DetalheCultura() {
 
   useEffect(() => {
     async function carregarCultura() {
-      const resposta = await fetch(`http://localhost:3000/api/culturas/${id}`);
+      try {
+        const dados = await culturaService.buscarPorId(Number(id));
 
-      const dados = await resposta.json();
-
-      if (!resposta.ok) {
-        console.error("Erro ao buscar cultura:", dados);
+        setCultura(dados);
+        setCarregando(false);
+      } catch (error) {
+        console.error("Erro ao buscar cultura:", error);
         setErro(true);
         setCarregando(false);
-        return;
       }
-
-      setCultura(dados);
-      setCarregando(false);
     }
 
     carregarCultura();

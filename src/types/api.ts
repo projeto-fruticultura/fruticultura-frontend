@@ -50,3 +50,24 @@ export interface PropriedadePayload {
   latitude: number
   longitude: number
 }
+
+export interface Cultura {
+  id: number
+  nome: string
+  variedade: string | null
+  descricao: string | null
+  temperaturaMin: number
+  temperaturaMax: number
+  umidadeMin: number
+  umidadeMax: number
+}
+
+export interface CulturaPayload {
+  nome: string
+  variedade: string
+  descricao: string
+  temperaturaMin: number
+  temperaturaMax: number
+  umidadeMin: number
+  umidadeMax: number
+}

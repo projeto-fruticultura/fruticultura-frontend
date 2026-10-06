@@ -1,9 +1,34 @@
+import { useState, type FormEvent } from "react";
 import { Save } from "lucide-react";
-
 
 import { AppShell, PageBreadcrumb } from "@/components/app/AppShell";
 
 export default function NovoSensor() {
+  const [codigo, setCodigo] = useState("");
+  const [tipo, setTipo] = useState("");
+  const [localizacao, setLocalizacao] = useState("");
+  const [dataInstalacao, setDataInstalacao] = useState("");
+  const [loteId, setLoteId] = useState("");
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (!loteId || !loteId.startsWith("lote-")) {
+      console.warn("Cadastro aguardando a API de lotes.");
+      return;
+    }
+
+    const payload = {
+      codigo,
+      tipo,
+      localizacao,
+      dataInstalacao,
+      loteId: Number(loteId.replace("lote-", "")),
+    };
+
+    console.log(payload);
+  }
+
   return (
     <AppShell section="sensores">
       <div className="mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -25,21 +50,26 @@ export default function NovoSensor() {
             </p>
           </div>
 
-          <form className="border-t border-[#edf1ee] p-5 sm:p-7">
+          <form
+            onSubmit={handleSubmit}
+            className="border-t border-[#edf1ee] p-5 sm:p-7"
+          >
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label
-                  htmlFor="nome"
+                  htmlFor="codigo"
                   className="text-sm font-semibold text-[#28372f]"
                 >
-                  Nome do sensor
+                  Código do sensor
                 </label>
 
                 <input
-                  id="nome"
-                  name="nome"
+                  id="codigo"
+                  name="codigo"
                   type="text"
-                  placeholder="Ex.: Sensor de temperatura 01"
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value)}
+                  placeholder="Ex.: SN-001"
                   className="mt-2 min-h-12 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 text-sm text-[#26352d] outline-none transition placeholder:text-[#8a968f] focus:border-[#009B4D] focus:ring-4 focus:ring-[#009B4D]/10"
                 />
               </div>
@@ -56,6 +86,8 @@ export default function NovoSensor() {
                   id="tipo"
                   name="tipo"
                   defaultValue=""
+                  value={tipo}
+                  onChange={(e) => setTipo(e.target.value)}
                   className="mt-2 min-h-12 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 text-sm text-[#26352d] outline-none transition focus:border-[#009B4D] focus:ring-4 focus:ring-[#009B4D]/10"
                 >
                   <option value="" disabled>
@@ -74,18 +106,38 @@ export default function NovoSensor() {
 
               <div>
                 <label
-                  htmlFor="identificador"
+                  htmlFor="localizacao"
                   className="text-sm font-semibold text-[#28372f]"
                 >
-                  Identificador
+                  Localização
                 </label>
 
                 <input
-                  id="identificador"
-                  name="identificador"
+                  id="localizacao"
+                  name="localizacao"
                   type="text"
-                  placeholder="Ex.: SN-001"
+                  value={localizacao}
+                  onChange={(e) => setLocalizacao(e.target.value)}
+                  placeholder="Ex.: Lote 01 - setor norte"
                   className="mt-2 min-h-12 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 text-sm text-[#26352d] outline-none transition placeholder:text-[#8a968f] focus:border-[#009B4D] focus:ring-4 focus:ring-[#009B4D]/10"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="dataInstalacao"
+                  className="text-sm font-semibold text-[#28372f]"
+                >
+                  Data de instalação
+                </label>
+
+                <input
+                  id="dataInstalacao"
+                  name="dataInstalacao"
+                  type="date"
+                  value={dataInstalacao}
+                  onChange={(e) => setDataInstalacao(e.target.value)}
+                  className="mt-2 min-h-12 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 text-sm text-[#26352d] outline-none transition focus:border-[#009B4D] focus:ring-4 focus:ring-[#009B4D]/10"
                 />
               </div>
 
@@ -126,7 +178,8 @@ export default function NovoSensor() {
                 <select
                   id="lote"
                   name="lote"
-                  defaultValue=""
+                  value={loteId}
+                  onChange={(e) => setLoteId(e.target.value)}
                   className="mt-2 min-h-12 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 text-sm text-[#26352d] outline-none transition focus:border-[#009B4D] focus:ring-4 focus:ring-[#009B4D]/10"
                 >
                   <option value="" disabled>
