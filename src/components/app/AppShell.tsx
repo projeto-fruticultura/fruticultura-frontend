@@ -46,7 +46,7 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
     <>
       <div className="flex min-h-[76px] items-center justify-between border-b border-white/10 px-5">
         <Link
-          to="/"
+          to="/painel"
           className="inline-flex items-center gap-2.5 rounded-xl text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
           onClick={() => setMobileMenuOpen(false)}
         >
