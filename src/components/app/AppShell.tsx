@@ -47,14 +47,15 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
       <div className="flex min-h-[76px] items-center justify-between border-b border-white/10 px-5">
         <Link
           to="/painel"
-          className="inline-flex items-center gap-2.5 rounded-xl text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+          className="h-12 flex items-center" 
           onClick={() => setMobileMenuOpen(false)}
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/12">
-            <Sprout size={21} aria-hidden="true" />
-          </span>
-          <span className="text-xl font-semibold tracking-[-0.03em]">ValeSafra</span>
-        </Link>
+        <img 
+          src="/public/assets/logo-valesafra.svg" 
+          alt="Logo ValeSafra" 
+          className="h-8 w-auto" 
+        />
+      </Link>
         <button
           type="button"
           onClick={() => setMobileMenuOpen(false)}
@@ -108,7 +109,7 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
 
   return (
     <div className="min-h-[100dvh] bg-[#f5f8f6] text-[#1F2933] lg:grid lg:grid-cols-[244px_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-[100dvh] flex-col overflow-hidden bg-[linear-gradient(180deg,#0e5138_0%,#14714d_55%,#1d8a61_100%)] lg:flex">
+      <aside className="sticky top-0 hidden h-[100dvh] flex-col overflow-hidden bg-[linear-gradient(180deg,#0C432C_0%,#1B8868_55%,#78BF5F_100%)] lg:flex">
         {sidebarContent}
       </aside>
 
