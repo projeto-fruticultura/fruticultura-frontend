@@ -1,4 +1,4 @@
-import { Bell, ChevronRight, Cpu, LayoutDashboard, Leaf, LogOut, Menu, Sprout, X, ChartNoAxesCombined } from 'lucide-react'
+import { Bell, ChevronRight, Cpu, LayoutDashboard, Leaf, LogOut, Menu, Sprout, X, ChartNoAxesCombined, MapPinned  } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
@@ -6,14 +6,16 @@ import { PwaInstallButton } from '@/components/ui/PwaInstallButton'
 
 interface AppShellProps {
   children: ReactNode
-  section?: 'overview' | 'properties' | 'culturas' | 'sensores'
+  section?: 'overview' | 'properties' | 'culturas' | 'sensores' | 'lotes'
 }
 
 const navItems = [
   { label: 'Visão geral', to: '/painel', icon: LayoutDashboard, key: 'overview' as const },
   { label: 'Propriedades', to: '/propriedades', icon: Leaf, key: 'properties' as const },
   { label: 'Culturas', to: '/culturas', icon: Sprout, key: 'culturas' as const },
+  { label: 'lotes', to: '/lotes', icon: MapPinned , key: 'lotes' as const },
   { label: 'Sensores', to: '/sensores', icon: Cpu, key: 'sensores' as const },
+  
 ]
 
 function formatCurrentDate() {
@@ -44,7 +46,7 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
     <>
       <div className="flex min-h-[76px] items-center justify-between border-b border-white/10 px-5">
         <Link
-          to="/"
+          to="/painel"
           className="inline-flex items-center gap-2.5 rounded-xl text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
           onClick={() => setMobileMenuOpen(false)}
         >
