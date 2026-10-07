@@ -317,7 +317,7 @@ export function PropertyForm({
               </p>
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-2 ">
               <Field
                 label="Cidade"
                 required
@@ -334,7 +334,7 @@ export function PropertyForm({
                       cidade: event.target.value,
                     }))
                   }
-                  className="input-propriedade"
+                  className="input-propriedade focus:border-[#CD1C18] focus:ring-4 focus:ring-[#CD1C18]/10 border-l-[5px] border-l-[#CD1C18]"
                   aria-invalid={Boolean(errors.cidade)}
                   aria-describedby={
                     errors.cidade ? `${fields.cidade}-error` : undefined
@@ -359,7 +359,7 @@ export function PropertyForm({
                       latitude: event.target.value,
                     }))
                   }
-                  className="input-propriedade"
+                  className="input-propriedade focus:border-[#CD1C18] focus:ring-4 focus:ring-[#CD1C18]/10 border-l-[5px] border-l-[#CD1C18]"
                   aria-invalid={Boolean(errors.latitude)}
                   aria-describedby={
                     errors.latitude ? `${fields.latitude}-error` : undefined
@@ -384,7 +384,7 @@ export function PropertyForm({
                       longitude: event.target.value,
                     }))
                   }
-                  className="input-propriedade"
+                  className="input-propriedade focus:border-[#CD1C18] focus:ring-4 focus:ring-[#CD1C18]/10 border-l-[5px] border-l-[#CD1C18]"
                   aria-invalid={Boolean(errors.longitude)}
                   aria-describedby={
                     errors.longitude ? `${fields.longitude}-error` : undefined
