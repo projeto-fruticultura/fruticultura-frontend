@@ -10,15 +10,18 @@ import {
   LoteForm,
   type LotePayload,
 } from '@/components/app/lotes/LoteForm'
+import { FeedbackMessage } from '@/components/ui/FeedbackMessage'
+import { useAuth } from '@/context/AuthContext'
+import { podeEscrever } from '@/lib/permissoes'
+import { loteService } from '@/services/loteService'
 
 export default function NovoLote() {
   const navigate = useNavigate()
+  const { usuario } = useAuth()
 
   async function handleSubmit(payload: LotePayload) {
-    // Futuramente:
-    // await loteService.criar(payload)
-
-    console.log('Lote cadastrado:', payload)
+    // Erros (inclusive os de campo) sobem para o LoteForm, que mostra a mensagem.
+    await loteService.criar(payload)
 
     navigate('/lotes', { replace: true })
   }
@@ -62,10 +65,16 @@ export default function NovoLote() {
           </div>
         </div>
 
-        <LoteForm
-          submitLabel="Cadastrar lote"
-          onSubmit={handleSubmit}
-        />
+        {podeEscrever(usuario?.perfil) ? (
+          <LoteForm
+            submitLabel="Cadastrar lote"
+            onSubmit={handleSubmit}
+          />
+        ) : (
+          <FeedbackMessage variant="info">
+            Seu perfil não tem permissão para cadastrar lotes.
+          </FeedbackMessage>
+        )}
       </div>
     </AppShell>
   )

@@ -71,3 +71,58 @@ export interface CulturaPayload {
   umidadeMin: number
   umidadeMax: number
 }
+
+export interface CulturaResumo {
+  id: number
+  nome: string
+  variedade: string | null
+}
+
+export interface Lote {
+  id: number
+  identificacao: string
+  area: number
+  dataPlantacao: string
+  colheitaEstimada: string | null
+  situacao: string
+  status: StatusRegistro
+  latitude: number | null
+  longitude: number | null
+  propriedadeId: number
+  culturaId: number
+  cultura: CulturaResumo
+  totalSensores: number
+}
+
+// Campos que podem ser editados (PUT parcial). A propriedade de um lote nunca muda.
+export interface LoteCampos {
+  identificacao: string
+  area: number
+  dataPlantacao: string
+  colheitaEstimada: string | null
+  situacao: string
+  culturaId: number
+}
+
+export interface LotePayload extends LoteCampos {
+  propriedadeId: number
+}
+
+export interface Sensor {
+  id: number
+  codigo: string
+  tipo: string
+  localizacao: string | null
+  dataInstalacao: string
+  status: StatusRegistro
+  loteId: number
+  lote: { id: number; identificacao: string }
+}
+
+export interface SensorPayload {
+  codigo: string
+  tipo: string
+  localizacao: string | null
+  dataInstalacao: string
+  loteId: number
+}
