@@ -74,8 +74,8 @@ export function PropertyForm({
   const [generalError, setGeneralError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const [buscandoLocalizacao, setBuscandoLocalizacao] = useState(false);
-  const [erroLocalizacao, setErroLocalizacao] = useState("");
+  const [_buscandoLocalizacao, setBuscandoLocalizacao] = useState(false);
+  const [_erroLocalizacao, setErroLocalizacao] = useState("");
 
   useEffect(() => {
     setForm({
