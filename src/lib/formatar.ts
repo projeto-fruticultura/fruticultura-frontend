@@ -12,3 +12,19 @@ export function hojeIso() {
   const dia = String(agora.getDate()).padStart(2, '0')
   return `${agora.getFullYear()}-${mes}-${dia}`
 }
+
+// "2026-10-08T14:05:00.000Z" -> "08/10/2026 11:05" (horario local de quem esta vendo).
+export function formatarDataHora(dataHoraIso: string | null | undefined) {
+  if (!dataHoraIso) return '—'
+  const data = new Date(dataHoraIso)
+  if (Number.isNaN(data.getTime())) return dataHoraIso
+  return data.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+}
+
+export function formatarNumero(valor: number, casas = 1) {
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: casas })
+}
+
+export function formatarMoeda(valor: number) {
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}

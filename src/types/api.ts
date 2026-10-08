@@ -126,3 +126,75 @@ export interface SensorPayload {
   dataInstalacao: string
   loteId: number
 }
+
+export interface Paginacao {
+  pagina: number
+  limite: number
+  total: number
+  totalPaginas: number
+}
+
+export interface Leitura {
+  id: number
+  sensorId: number
+  temperatura: number
+  umidade: number
+  dataHoraLeitura: string
+}
+
+export interface LeiturasResposta {
+  dados: Leitura[]
+  paginacao: Paginacao
+}
+
+export interface LeiturasFiltros {
+  sensorId?: number
+  loteId?: number
+  propriedadeId?: number
+  pagina?: number
+  limite?: number
+}
+
+export type TipoAlerta = 'TEMPERATURA_ALTA' | 'TEMPERATURA_BAIXA' | 'UMIDADE_ALTA' | 'UMIDADE_BAIXA'
+
+export interface Alerta {
+  tipo: TipoAlerta
+  valor: number
+  limite: number
+  dataHoraLeitura: string
+  leituraDesatualizada: boolean
+  sensorId: number
+  sensorCodigo: string
+  loteId: number
+  loteIdentificacao: string
+  propriedadeId: number
+  culturaNome: string
+}
+
+export interface AlertasResposta {
+  total: number
+  alertas: Alerta[]
+}
+
+export type ProdutoMercado = 'UVA' | 'MANGA' | 'BANANA' | 'GOIABA' | 'MELAO'
+
+export interface PrecoRegistro {
+  municipio: string
+  uf: string
+  ceasa: string
+  produto: string
+  variedade: string | null
+  unidade: string
+  data: string
+  preco: number
+}
+
+export interface PrecoResposta {
+  fonte: string
+  origem: string
+  consultadoEn: string
+  filtros: { produto: string; uf: string; ceasa: string | null }
+  precoAtual: PrecoRegistro | null
+  historico: PrecoRegistro[]
+  desatualizado?: boolean
+}
