@@ -97,12 +97,12 @@ export default function Login() {
       </form>
 
       <p className="mt-7 text-center text-sm text-[#69747e]">
-        Ainda não tem uma conta?{' '}
+        Ainda não tem acesso?{' '}
         <Link
           to="/cadastro"
           className="rounded-md font-semibold text-[#15693E] underline-offset-4 transition hover:text-[#009B4D] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
         >
-          Cadastre-se
+          Saiba como solicitar
         </Link>
       </p>
     </AuthLayout>

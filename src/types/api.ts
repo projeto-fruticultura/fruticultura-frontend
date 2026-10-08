@@ -14,10 +14,6 @@ export interface LoginResponse {
   usuario: Usuario
 }
 
-export interface MensagemResponse {
-  mensagem: string
-}
-
 export interface ApiErrorBody {
   erro?: string
   campos?: Record<string, string>

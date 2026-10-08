@@ -4,7 +4,6 @@ import { AuthProvider } from "@/context/AuthContext";
 import Cadastro from "@/pages/Auth/Cadastro";
 import EsqueciSenha from "@/pages/Auth/EsqueciSenha";
 import Login from "@/pages/Auth/Login";
-import RedefinirSenha from "@/pages/Auth/RedefinirSenha";
 import Home from "@/pages/Home/Home";
 import DetalhePropriedade from "@/pages/Propriedades/DetalhePropriedade";
 import EditarPropriedade from "@/pages/Propriedades/EditarPropriedade";
@@ -31,7 +30,6 @@ export function AppRoutes() {
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/esqueci-senha" element={<EsqueciSenha />} />
-          <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/painel" element={<Dashboard />} />
