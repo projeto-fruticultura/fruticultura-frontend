@@ -6,12 +6,15 @@ const TOKEN_KEY = 'valesafra:token'
 export class ApiError extends Error {
   readonly status: number
   readonly campos?: Record<string, string>
+  // Campos extras da resposta de erro (ex.: { totalSensores } no 409 de excluir lote com sensores ativos).
+  readonly dados?: Record<string, unknown>
 
-  constructor(status: number, message: string, campos?: Record<string, string>) {
+  constructor(status: number, message: string, campos?: Record<string, string>, dados?: Record<string, unknown>) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.campos = campos
+    this.dados = dados
   }
 }
 
@@ -59,8 +62,13 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     : undefined
 
   if (!response.ok) {
-    const errorBody = body as ApiErrorBody | undefined
-    throw new ApiError(response.status, errorBody?.erro || 'Não foi possível concluir a solicitação.', errorBody?.campos)
+    const { erro, campos, ...extras } = (body ?? {}) as ApiErrorBody & Record<string, unknown>
+    throw new ApiError(
+      response.status,
+      erro || 'Não foi possível concluir a solicitação.',
+      campos,
+      Object.keys(extras).length > 0 ? extras : undefined,
+    )
   }
 
   return body as T

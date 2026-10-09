@@ -8,133 +8,148 @@ import {
 } from 'react'
 import { FeedbackMessage } from '@/components/ui/FeedbackMessage'
 import { ApiError } from '@/services/api'
+import { culturaService } from '@/services/culturaService'
+import { propriedadeService } from '@/services/propriedadeService'
+import { rotuloSituacao, SITUACOES_LOTE } from '@/pages/Lotes/situacoes'
+import type { Cultura, LotePayload, PropriedadeResumo } from '@/types/api'
 
-export interface LotePayload {
-  identificacao: string
-  area: number
-  data_plantacao: string
-  situacao: string
-  propriedade_id: number
-  cultura_id: number
-}
+export type { LotePayload }
 
 export interface LoteFormInitialValues {
   identificacao?: string
   area?: string | number
-  data_plantacao?: string
+  dataPlantacao?: string
+  colheitaEstimada?: string | null
   situacao?: string
-  propriedade_id?: string | number
-  cultura_id?: string | number
+  propriedadeId?: string | number
+  culturaId?: string | number
 }
 
 interface LoteFormProps {
   initialValues?: LoteFormInitialValues
   submitLabel: string
   onSubmit: (payload: LotePayload) => Promise<void>
+  // Na edicao a propriedade do lote nao muda (o backend ignora), entao o campo fica travado.
+  propriedadeBloqueada?: boolean
 }
 
-const SITUACOES = [
-  { value: 'EM_PREPARACAO', label: 'Em preparação' },
-  { value: 'PLANTADO', label: 'Plantado' },
-  { value: 'EM_PRODUCAO', label: 'Em produção' },
-  { value: 'EM_COLHEITA', label: 'Em colheita' },
-  { value: 'EM_DESCANSO', label: 'Em descanso' },
-  { value: 'ENCERRADO', label: 'Encerrado' },
-]
+interface LoteFormValores {
+  identificacao: string
+  area: string
+  dataPlantacao: string
+  colheitaEstimada: string
+  situacao: string
+  propriedadeId: string
+  culturaId: string
+}
 
-/*
- * Mock temporário.
- * Depois, esses dados podem ser substituídos por chamadas à API:
- *
- * GET /propriedades
- * GET /culturas
- */
-const PROPRIEDADES = [
-  {
-    id: 1,
-    nome: 'Fazenda São José',
-  },
-  {
-    id: 2,
-    nome: 'Fazenda Boa Vista',
-  },
-]
-
-const CULTURAS = [
-  {
-    id: 1,
-    nome: 'Manga',
-  },
-  {
-    id: 2,
-    nome: 'Uva',
-  },
-  {
-    id: 3,
-    nome: 'Goiaba',
-  },
-]
+function valoresIniciais(initialValues?: LoteFormInitialValues): LoteFormValores {
+  return {
+    identificacao: String(initialValues?.identificacao ?? ''),
+    area: String(initialValues?.area ?? ''),
+    dataPlantacao: String(initialValues?.dataPlantacao ?? ''),
+    colheitaEstimada: String(initialValues?.colheitaEstimada ?? ''),
+    situacao: String(initialValues?.situacao ?? 'PLANTADO'),
+    propriedadeId: String(initialValues?.propriedadeId ?? ''),
+    culturaId: String(initialValues?.culturaId ?? ''),
+  }
+}
 
 export function LoteForm({
   initialValues,
   submitLabel,
   onSubmit,
+  propriedadeBloqueada = false,
 }: LoteFormProps) {
   const formId = useId()
 
-  const [form, setForm] = useState({
-    identificacao: String(initialValues?.identificacao ?? ''),
-    area: String(initialValues?.area ?? ''),
-    data_plantacao: String(initialValues?.data_plantacao ?? ''),
-    situacao: String(initialValues?.situacao ?? 'PLANTADO'),
-    propriedade_id: String(initialValues?.propriedade_id ?? ''),
-    cultura_id: String(initialValues?.cultura_id ?? ''),
-  })
-
+  const [form, setForm] = useState<LoteFormValores>(() => valoresIniciais(initialValues))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [generalError, setGeneralError] = useState('')
   const [saving, setSaving] = useState(false)
 
+  const [propriedades, setPropriedades] = useState<PropriedadeResumo[]>([])
+  const [culturas, setCulturas] = useState<Cultura[]>([])
+  const [carregandoListas, setCarregandoListas] = useState(true)
+  const [erroListas, setErroListas] = useState('')
+
   useEffect(() => {
-    setForm({
-      identificacao: String(initialValues?.identificacao ?? ''),
-      area: String(initialValues?.area ?? ''),
-      data_plantacao: String(initialValues?.data_plantacao ?? ''),
-      situacao: String(initialValues?.situacao ?? 'PLANTADO'),
-      propriedade_id: String(initialValues?.propriedade_id ?? ''),
-      cultura_id: String(initialValues?.cultura_id ?? ''),
-    })
-  }, [initialValues])
+    let ativo = true
+
+    async function carregarListas() {
+      try {
+        const [listaPropriedades, listaCulturas] = await Promise.all([
+          propriedadeService.listar(),
+          culturaService.listar(),
+        ])
+        if (!ativo) return
+        setPropriedades(listaPropriedades)
+        setCulturas(listaCulturas)
+      } catch (error) {
+        if (ativo) {
+          setErroListas(
+            error instanceof ApiError
+              ? error.message
+              : 'Não foi possível carregar as propriedades e as culturas.',
+          )
+        }
+      } finally {
+        if (ativo) setCarregandoListas(false)
+      }
+    }
+
+    carregarListas()
+
+    return () => {
+      ativo = false
+    }
+  }, [])
+
+  function atualizar(campo: keyof LoteFormValores, valor: string) {
+    setForm((current) => ({ ...current, [campo]: valor }))
+  }
 
   function validate() {
     const next: Record<string, string> = {}
 
-    const area = Number(form.area)
-    const propriedadeId = Number(form.propriedade_id)
-    const culturaId = Number(form.cultura_id)
-
-    if (form.identificacao.trim().length < 2) {
-      next.identificacao = 'Informe a identificação do lote.'
+    const identificacao = form.identificacao.trim()
+    if (identificacao.length < 1 || identificacao.length > 100) {
+      next.identificacao = 'Informe a identificação do lote (até 100 caracteres).'
     }
 
-    if (!Number.isFinite(area) || area <= 0) {
+    const textoArea = form.area.trim().replace(',', '.')
+    const area = Number(textoArea)
+    if (!textoArea || !Number.isFinite(area) || area <= 0) {
       next.area = 'Informe uma área maior que zero.'
+    } else if (!/^\d+(\.\d{1,2})?$/.test(textoArea)) {
+      next.area = 'Use no máximo 2 casas decimais.'
     }
 
-    if (!form.data_plantacao) {
-      next.data_plantacao = 'Informe a data de plantação.'
+    if (!form.dataPlantacao) {
+      next.dataPlantacao = 'Informe a data de plantação.'
     }
 
-    if (!SITUACOES.some((situacao) => situacao.value === form.situacao)) {
+    if (
+      form.colheitaEstimada &&
+      form.dataPlantacao &&
+      form.colheitaEstimada < form.dataPlantacao
+    ) {
+      next.colheitaEstimada = 'A colheita estimada não pode ser antes da plantação.'
+    }
+
+    const situacao = form.situacao.trim()
+    if (situacao.length < 1 || situacao.length > 30) {
       next.situacao = 'Selecione uma situação válida.'
     }
 
+    const propriedadeId = Number(form.propriedadeId)
     if (!Number.isInteger(propriedadeId) || propriedadeId <= 0) {
-      next.propriedade_id = 'Selecione uma propriedade.'
+      next.propriedadeId = 'Selecione uma propriedade.'
     }
 
+    const culturaId = Number(form.culturaId)
     if (!Number.isInteger(culturaId) || culturaId <= 0) {
-      next.cultura_id = 'Selecione uma cultura.'
+      next.culturaId = 'Selecione uma cultura.'
     }
 
     setErrors(next)
@@ -154,11 +169,12 @@ export function LoteForm({
     try {
       await onSubmit({
         identificacao: form.identificacao.trim(),
-        area: Number(form.area),
-        data_plantacao: form.data_plantacao,
-        situacao: form.situacao,
-        propriedade_id: Number(form.propriedade_id),
-        cultura_id: Number(form.cultura_id),
+        area: Number(form.area.trim().replace(',', '.')),
+        dataPlantacao: form.dataPlantacao,
+        colheitaEstimada: form.colheitaEstimada || null,
+        situacao: form.situacao.trim(),
+        propriedadeId: Number(form.propriedadeId),
+        culturaId: Number(form.culturaId),
       })
     } catch (error) {
       if (error instanceof ApiError) {
@@ -181,11 +197,20 @@ export function LoteForm({
   const fields = {
     identificacao: `${formId}-identificacao`,
     area: `${formId}-area`,
-    data_plantacao: `${formId}-data-plantacao`,
+    dataPlantacao: `${formId}-data-plantacao`,
+    colheitaEstimada: `${formId}-colheita-estimada`,
     situacao: `${formId}-situacao`,
-    propriedade_id: `${formId}-propriedade`,
-    cultura_id: `${formId}-cultura`,
+    propriedadeId: `${formId}-propriedade`,
+    culturaId: `${formId}-cultura`,
   }
+
+  // Situacao fora da lista (lote antigo) continua selecionavel, para a edicao nao apagar o valor sem querer.
+  const situacaoForaDaLista =
+    form.situacao !== '' &&
+    !SITUACOES_LOTE.some((situacao) => situacao.value === form.situacao)
+
+  const semPropriedades = !carregandoListas && !erroListas && propriedades.length === 0
+  const semCulturas = !carregandoListas && !erroListas && culturas.length === 0
 
   return (
     <form onSubmit={handleSubmit} noValidate>
@@ -193,6 +218,28 @@ export function LoteForm({
         <div className="mb-5">
           <FeedbackMessage variant="error">
             {generalError}
+          </FeedbackMessage>
+        </div>
+      ) : null}
+
+      {erroListas ? (
+        <div className="mb-5">
+          <FeedbackMessage variant="error">{erroListas}</FeedbackMessage>
+        </div>
+      ) : null}
+
+      {semPropriedades ? (
+        <div className="mb-5">
+          <FeedbackMessage variant="info">
+            Você ainda não tem propriedades cadastradas. Cadastre uma propriedade antes de criar um lote.
+          </FeedbackMessage>
+        </div>
+      ) : null}
+
+      {semCulturas ? (
+        <div className="mb-5">
+          <FeedbackMessage variant="info">
+            Ainda não há culturas cadastradas. Cadastre uma cultura antes de criar um lote.
           </FeedbackMessage>
         </div>
       ) : null}
@@ -223,12 +270,7 @@ export function LoteForm({
                 <input
                   id={fields.identificacao}
                   value={form.identificacao}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      identificacao: event.target.value,
-                    }))
-                  }
+                  onChange={(event) => atualizar('identificacao', event.target.value)}
                   className="input-propriedade"
                   placeholder="Ex.: Lote 01"
                   aria-invalid={Boolean(errors.identificacao)}
@@ -250,12 +292,7 @@ export function LoteForm({
                   id={fields.area}
                   inputMode="decimal"
                   value={form.area}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      area: event.target.value,
-                    }))
-                  }
+                  onChange={(event) => atualizar('area', event.target.value)}
                   className="input-propriedade"
                   placeholder="Ex.: 12.5"
                   aria-invalid={Boolean(errors.area)}
@@ -268,24 +305,39 @@ export function LoteForm({
               <Field
                 label="Data de plantação"
                 required
-                error={errors.data_plantacao}
-                htmlFor={fields.data_plantacao}
+                error={errors.dataPlantacao}
+                htmlFor={fields.dataPlantacao}
               >
                 <input
-                  id={fields.data_plantacao}
+                  id={fields.dataPlantacao}
                   type="date"
-                  value={form.data_plantacao}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      data_plantacao: event.target.value,
-                    }))
-                  }
+                  value={form.dataPlantacao}
+                  onChange={(event) => atualizar('dataPlantacao', event.target.value)}
                   className="input-propriedade"
-                  aria-invalid={Boolean(errors.data_plantacao)}
+                  aria-invalid={Boolean(errors.dataPlantacao)}
                   aria-describedby={
-                    errors.data_plantacao
-                      ? `${fields.data_plantacao}-error`
+                    errors.dataPlantacao
+                      ? `${fields.dataPlantacao}-error`
+                      : undefined
+                  }
+                />
+              </Field>
+
+              <Field
+                label="Colheita estimada (opcional)"
+                error={errors.colheitaEstimada}
+                htmlFor={fields.colheitaEstimada}
+              >
+                <input
+                  id={fields.colheitaEstimada}
+                  type="date"
+                  value={form.colheitaEstimada}
+                  onChange={(event) => atualizar('colheitaEstimada', event.target.value)}
+                  className="input-propriedade"
+                  aria-invalid={Boolean(errors.colheitaEstimada)}
+                  aria-describedby={
+                    errors.colheitaEstimada
+                      ? `${fields.colheitaEstimada}-error`
                       : undefined
                   }
                 />
@@ -295,18 +347,12 @@ export function LoteForm({
                 label="Situação"
                 required
                 error={errors.situacao}
-                className="sm:col-span-2"
                 htmlFor={fields.situacao}
               >
                 <select
                   id={fields.situacao}
                   value={form.situacao}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      situacao: event.target.value,
-                    }))
-                  }
+                  onChange={(event) => atualizar('situacao', event.target.value)}
                   className="input-propriedade"
                   aria-invalid={Boolean(errors.situacao)}
                   aria-describedby={
@@ -315,7 +361,7 @@ export function LoteForm({
                       : undefined
                   }
                 >
-                  {SITUACOES.map((situacao) => (
+                  {SITUACOES_LOTE.map((situacao) => (
                     <option
                       key={situacao.value}
                       value={situacao.value}
@@ -323,6 +369,12 @@ export function LoteForm({
                       {situacao.label}
                     </option>
                   ))}
+
+                  {situacaoForaDaLista ? (
+                    <option value={form.situacao}>
+                      {rotuloSituacao(form.situacao)}
+                    </option>
+                  ) : null}
                 </select>
               </Field>
             </div>
@@ -336,7 +388,9 @@ export function LoteForm({
               </h2>
 
               <p className="mt-1 text-sm leading-6 text-[#6a776f]">
-                Selecione a propriedade e a cultura relacionadas a este lote.
+                {propriedadeBloqueada
+                  ? 'A propriedade de um lote não pode ser trocada. Você pode mudar a cultura.'
+                  : 'Selecione a propriedade e a cultura relacionadas a este lote.'}
               </p>
             </div>
 
@@ -344,29 +398,27 @@ export function LoteForm({
               <Field
                 label="Propriedade"
                 required
-                error={errors.propriedade_id}
-                htmlFor={fields.propriedade_id}
+                error={errors.propriedadeId}
+                htmlFor={fields.propriedadeId}
               >
                 <select
-                  id={fields.propriedade_id}
-                  value={form.propriedade_id}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      propriedade_id: event.target.value,
-                    }))
-                  }
+                  id={fields.propriedadeId}
+                  value={form.propriedadeId}
+                  onChange={(event) => atualizar('propriedadeId', event.target.value)}
+                  disabled={carregandoListas || propriedadeBloqueada}
                   className="input-propriedade"
-                  aria-invalid={Boolean(errors.propriedade_id)}
+                  aria-invalid={Boolean(errors.propriedadeId)}
                   aria-describedby={
-                    errors.propriedade_id
-                      ? `${fields.propriedade_id}-error`
+                    errors.propriedadeId
+                      ? `${fields.propriedadeId}-error`
                       : undefined
                   }
                 >
-                  <option value="">Selecione uma propriedade</option>
+                  <option value="">
+                    {carregandoListas ? 'Carregando...' : 'Selecione uma propriedade'}
+                  </option>
 
-                  {PROPRIEDADES.map((propriedade) => (
+                  {propriedades.map((propriedade) => (
                     <option
                       key={propriedade.id}
                       value={propriedade.id}
@@ -380,34 +432,32 @@ export function LoteForm({
               <Field
                 label="Cultura"
                 required
-                error={errors.cultura_id}
-                htmlFor={fields.cultura_id}
+                error={errors.culturaId}
+                htmlFor={fields.culturaId}
               >
                 <select
-                  id={fields.cultura_id}
-                  value={form.cultura_id}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      cultura_id: event.target.value,
-                    }))
-                  }
+                  id={fields.culturaId}
+                  value={form.culturaId}
+                  onChange={(event) => atualizar('culturaId', event.target.value)}
+                  disabled={carregandoListas}
                   className="input-propriedade"
-                  aria-invalid={Boolean(errors.cultura_id)}
+                  aria-invalid={Boolean(errors.culturaId)}
                   aria-describedby={
-                    errors.cultura_id
-                      ? `${fields.cultura_id}-error`
+                    errors.culturaId
+                      ? `${fields.culturaId}-error`
                       : undefined
                   }
                 >
-                  <option value="">Selecione uma cultura</option>
+                  <option value="">
+                    {carregandoListas ? 'Carregando...' : 'Selecione uma cultura'}
+                  </option>
 
-                  {CULTURAS.map((cultura) => (
+                  {culturas.map((cultura) => (
                     <option
                       key={cultura.id}
                       value={cultura.id}
                     >
-                      {cultura.nome}
+                      {cultura.variedade ? `${cultura.nome} (${cultura.variedade})` : cultura.nome}
                     </option>
                   ))}
                 </select>
@@ -441,8 +491,8 @@ export function LoteForm({
               <SummaryItem
                 label="Propriedade"
                 value={
-                  PROPRIEDADES.find(
-                    (item) => String(item.id) === form.propriedade_id,
+                  propriedades.find(
+                    (item) => String(item.id) === form.propriedadeId,
                   )?.nome ?? 'Não selecionada'
                 }
               />
@@ -450,19 +500,15 @@ export function LoteForm({
               <SummaryItem
                 label="Cultura"
                 value={
-                  CULTURAS.find(
-                    (item) => String(item.id) === form.cultura_id,
+                  culturas.find(
+                    (item) => String(item.id) === form.culturaId,
                   )?.nome ?? 'Não selecionada'
                 }
               />
 
               <SummaryItem
                 label="Situação"
-                value={
-                  SITUACOES.find(
-                    (item) => item.value === form.situacao,
-                  )?.label ?? 'Não informada'
-                }
+                value={form.situacao ? rotuloSituacao(form.situacao) : 'Não informada'}
               />
             </div>
           </section>
@@ -470,7 +516,7 @@ export function LoteForm({
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end xl:flex-col-reverse">
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || carregandoListas}
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#009B4D] px-5 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(0,155,77,.18)] transition hover:bg-[#008844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? (

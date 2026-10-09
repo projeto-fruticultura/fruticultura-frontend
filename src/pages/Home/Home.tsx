@@ -57,7 +57,7 @@ export default function Home() {
                   to="/cadastro"
                   className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#009B4D] px-4 text-sm font-semibold text-white transition hover:bg-[#008844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/20"
                 >
-                  Criar conta
+                  Quero acesso
                 </Link>
               </>
             )}
@@ -94,7 +94,7 @@ export default function Home() {
                   to="/cadastro"
                   className="inline-flex min-h-13 items-center justify-center rounded-xl border border-[#d4e2d9] bg-white px-6 text-[15px] font-semibold text-[#15693E] transition hover:bg-[#f0f7f3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
                 >
-                  Começar agora
+                  Quero acesso
                 </Link>
               ) : null}
             </div>

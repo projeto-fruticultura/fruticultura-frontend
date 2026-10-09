@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   Activity,
   AlertTriangle,
@@ -10,50 +10,235 @@ import {
   SlidersHorizontal,
 } from 'lucide-react'
 import { AppShell } from '@/components/app/AppShell'
+import { AlertasPainel, type EstadoAlertas } from '@/components/app/dashboard/AlertasPainel'
+import { LeiturasTabela, type LinhaLeitura } from '@/components/app/dashboard/LeiturasTabela'
+import { PrecosMercado } from '@/components/app/dashboard/PrecosMercado'
 import { FeedbackMessage } from '@/components/ui/FeedbackMessage'
 import { useAuth } from '@/context/AuthContext'
 import { ApiError } from '@/services/api'
+import { alertaService } from '@/services/alertaService'
+import { leituraService } from '@/services/leituraService'
+import { loteService } from '@/services/loteService'
 import { propriedadeService } from '@/services/propriedadeService'
-import type { PropriedadeResumo } from '@/types/api'
+import { sensorService } from '@/services/sensorService'
+import type { Leitura, Lote, Paginacao, PropriedadeResumo, Sensor } from '@/types/api'
 
 type DashboardTab = 'overview' | 'production'
+
+interface Catalogo {
+  propriedades: PropriedadeResumo[]
+  lotes: Lote[]
+  sensores: Sensor[]
+}
+
+interface FiltrosAplicados {
+  propriedadeId?: number
+  loteId?: number
+  sensorId?: number
+}
+
+interface EstadoLeituras {
+  carregando: boolean
+  erro: string
+  linhas: LinhaLeitura[]
+  paginacao?: Paginacao
+}
+
+const UMA_HORA_MS = 60 * 60 * 1000
+const LEITURAS_POR_PAGINA = 15
+
+// Os nomes de propriedade, lote e sensor vem do catalogo: a leitura so traz o sensorId.
+function montarLinhas(leituras: Leitura[], catalogo: Catalogo, agora: number): LinhaLeitura[] {
+  return leituras.map((leitura) => {
+    const sensor = catalogo.sensores.find((item) => item.id === leitura.sensorId)
+    const lote = sensor ? catalogo.lotes.find((item) => item.id === sensor.loteId) : undefined
+    const propriedade = lote ? catalogo.propriedades.find((item) => item.id === lote.propriedadeId) : undefined
+
+    return {
+      id: leitura.id,
+      propriedade: propriedade?.nome ?? '—',
+      lote: sensor?.lote.identificacao ?? '—',
+      sensor: sensor?.codigo ?? `Sensor #${leitura.sensorId}`,
+      temperatura: leitura.temperatura,
+      umidade: leitura.umidade,
+      dataHoraLeitura: leitura.dataHoraLeitura,
+      desatualizada: agora - Date.parse(leitura.dataHoraLeitura) > UMA_HORA_MS,
+    }
+  })
+}
+
+// 404 = o backend nao tem a rota de alertas: a tela mostra "indisponiveis" e segue funcionando.
+async function buscarAlertas(filtros: FiltrosAplicados = {}): Promise<EstadoAlertas> {
+  try {
+    const resposta = await alertaService.listar({ propriedadeId: filtros.propriedadeId, loteId: filtros.loteId })
+    // O filtro por sensor so existe no front: a rota filtra por propriedade e por lote.
+    const alertas = filtros.sensorId
+      ? resposta.alertas.filter((alerta) => alerta.sensorId === filtros.sensorId)
+      : resposta.alertas
+    return { status: 'ok', total: filtros.sensorId ? alertas.length : resposta.total, alertas }
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return { status: 'indisponivel' }
+    return {
+      status: 'erro',
+      mensagem: error instanceof ApiError ? error.message : 'Não foi possível carregar os alertas.',
+    }
+  }
+}
 
 export default function Dashboard() {
   const { usuario } = useAuth()
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview')
   const [propriedades, setPropriedades] = useState<PropriedadeResumo[]>([])
+  const [lotes, setLotes] = useState<Lote[]>([])
+  const [sensores, setSensores] = useState<Sensor[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  const [alertasGerais, setAlertasGerais] = useState<EstadoAlertas>({ status: 'carregando' })
+  const [recentes, setRecentes] = useState<EstadoLeituras>({ carregando: true, erro: '', linhas: [] })
+
   const [propriedadeFiltro, setPropriedadeFiltro] = useState('')
   const [loteFiltro, setLoteFiltro] = useState('')
   const [sensorFiltro, setSensorFiltro] = useState('')
+  const [producaoIniciada, setProducaoIniciada] = useState(false)
+  const [aplicados, setAplicados] = useState<FiltrosAplicados>({})
+  const [producao, setProducao] = useState<EstadoLeituras>({ carregando: false, erro: '', linhas: [] })
+  const [alertasProducao, setAlertasProducao] = useState<EstadoAlertas>({ status: 'carregando' })
+
+  // Catalogo mais recente, lido tambem por funcoes assincronas que rodam depois de a tela mudar.
+  const catalogo = useRef<Catalogo>({ propriedades: [], lotes: [], sensores: [] })
+
+  async function carregarRecentes() {
+    setRecentes((atual) => ({ ...atual, carregando: true, erro: '' }))
+
+    try {
+      const resposta = await leituraService.listar({ limite: 10 })
+      setRecentes({ carregando: false, erro: '', linhas: montarLinhas(resposta.dados, catalogo.current, Date.now()) })
+    } catch (error) {
+      setRecentes({
+        carregando: false,
+        erro: error instanceof ApiError ? error.message : 'Não foi possível carregar as leituras.',
+        linhas: [],
+      })
+    }
+  }
 
   async function carregarDashboard() {
     setCarregando(true)
     setErro('')
+    setAlertasGerais({ status: 'carregando' })
+
+    // Os alertas nao dependem do restante: buscam em paralelo (e nunca rejeitam).
+    const pedidoAlertas = buscarAlertas()
 
     try {
-      setPropriedades(await propriedadeService.listar())
+      const [listaPropriedades, listaLotes, listaSensores] = await Promise.all([
+        propriedadeService.listar(),
+        loteService.listar(),
+        sensorService.listar(),
+      ])
+      catalogo.current = { propriedades: listaPropriedades, lotes: listaLotes, sensores: listaSensores }
+      setPropriedades(listaPropriedades)
+      setLotes(listaLotes)
+      setSensores(listaSensores)
     } catch (error) {
       setErro(error instanceof ApiError ? error.message : 'Não foi possível carregar os dados do dashboard.')
     } finally {
       setCarregando(false)
     }
+
+    setAlertasGerais(await pedidoAlertas)
+    await carregarRecentes()
   }
 
   useEffect(() => {
     void carregarDashboard()
   }, [])
 
+  async function carregarProducao(filtros: FiltrosAplicados, pagina: number) {
+    setProducao((atual) => ({ ...atual, carregando: true, erro: '' }))
+    setAlertasProducao({ status: 'carregando' })
+
+    const pedidoAlertas = buscarAlertas(filtros)
+
+    try {
+      const resposta = await leituraService.listar({ ...filtros, pagina, limite: LEITURAS_POR_PAGINA })
+      setProducao({
+        carregando: false,
+        erro: '',
+        linhas: montarLinhas(resposta.dados, catalogo.current, Date.now()),
+        paginacao: resposta.paginacao,
+      })
+    } catch (error) {
+      setProducao({
+        carregando: false,
+        erro: error instanceof ApiError ? error.message : 'Não foi possível carregar as leituras.',
+        linhas: [],
+      })
+    }
+
+    setAlertasProducao(await pedidoAlertas)
+  }
+
+  function abrirAba(aba: DashboardTab) {
+    setActiveTab(aba)
+    if (aba === 'production' && !producaoIniciada) {
+      setProducaoIniciada(true)
+      void carregarProducao(aplicados, 1)
+    }
+  }
+
+  function aplicarFiltros() {
+    const filtros: FiltrosAplicados = {
+      propriedadeId: propriedadeFiltro ? Number(propriedadeFiltro) : undefined,
+      loteId: loteFiltro ? Number(loteFiltro) : undefined,
+      sensorId: sensorFiltro ? Number(sensorFiltro) : undefined,
+    }
+    setAplicados(filtros)
+    void carregarProducao(filtros, 1)
+  }
+
+  function mudarPropriedade(valor: string) {
+    setPropriedadeFiltro(valor)
+    setLoteFiltro('')
+    setSensorFiltro('')
+  }
+
+  function mudarLote(valor: string) {
+    setLoteFiltro(valor)
+    setSensorFiltro('')
+  }
+
+  // Os seletores se afunilam: lotes da propriedade escolhida e sensores do lote (ou da propriedade) escolhido.
+  const lotesDoFiltro = useMemo(
+    () => (propriedadeFiltro ? lotes.filter((lote) => String(lote.propriedadeId) === propriedadeFiltro) : lotes),
+    [lotes, propriedadeFiltro],
+  )
+  const sensoresDoFiltro = useMemo(() => {
+    if (loteFiltro) return sensores.filter((sensor) => String(sensor.loteId) === loteFiltro)
+    if (propriedadeFiltro) {
+      const idsDosLotes = new Set(lotesDoFiltro.map((lote) => lote.id))
+      return sensores.filter((sensor) => idsDosLotes.has(sensor.loteId))
+    }
+    return sensores
+  }, [sensores, loteFiltro, propriedadeFiltro, lotesDoFiltro])
+
   const totals = useMemo(
     () => ({
       propriedades: propriedades.length,
       lotes: propriedades.reduce((total, propriedade) => total + propriedade.totalLotes, 0),
       sensores: propriedades.reduce((total, propriedade) => total + propriedade.totalSensores, 0),
-      alertas: 0,
     }),
     [propriedades],
   )
+
+  const alertasValor =
+    alertasGerais.status === 'ok' ? alertasGerais.total : '—'
+  const alertasAjuda =
+    alertasGerais.status === 'indisponivel'
+      ? 'Alertas indisponíveis'
+      : alertasGerais.status === 'erro'
+        ? 'Não foi possível carregar os alertas'
+        : undefined
 
   const firstName = usuario?.nome?.trim().split(/\s+/)[0] || 'Produtor'
 
@@ -70,7 +255,7 @@ export default function Dashboard() {
               type="button"
               role="tab"
               aria-selected={activeTab === 'overview'}
-              onClick={() => setActiveTab('overview')}
+              onClick={() => abrirAba('overview')}
               className={`inline-flex min-h-10 items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D] ${
                 activeTab === 'overview'
                   ? 'bg-[#a9edc4] text-[#075c36] shadow-sm'
@@ -84,7 +269,7 @@ export default function Dashboard() {
               type="button"
               role="tab"
               aria-selected={activeTab === 'production'}
-              onClick={() => setActiveTab('production')}
+              onClick={() => abrirAba('production')}
               className={`inline-flex min-h-10 items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D] ${
                 activeTab === 'production'
                   ? 'bg-[#a9edc4] text-[#075c36] shadow-sm'
@@ -142,12 +327,16 @@ export default function Dashboard() {
                 />
                 <MetricCard
                   label="Alertas ativos"
-                  value={totals.alertas}
+                  value={alertasValor}
                   icon={AlertTriangle}
                   accent="bg-[#f2a23d]"
-                  helper="Integração de alertas ainda não disponível"
+                  helper={alertasAjuda}
                 />
               </div>
+            </div>
+
+            <div className="mt-4">
+              <AlertasPainel estado={alertasGerais} />
             </div>
 
             <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(300px,0.78fr)_minmax(0,1.42fr)]">
@@ -192,25 +381,13 @@ export default function Dashboard() {
                   <Activity size={18} className="text-[#168150]" aria-hidden="true" />
                 </div>
 
-                <div className="mt-4 overflow-x-auto rounded-xl border border-[#e6ece8]">
-                  <table className="w-full min-w-[650px] border-collapse text-left text-xs">
-                    <thead className="bg-[#eef1ef] text-[#435249]">
-                      <tr>
-                        <th className="px-3 py-2.5 font-semibold">Propriedade</th>
-                        <th className="px-3 py-2.5 font-semibold">Lote</th>
-                        <th className="px-3 py-2.5 font-semibold">Sensor</th>
-                        <th className="px-3 py-2.5 font-semibold">Temperatura</th>
-                        <th className="px-3 py-2.5 font-semibold">Umidade</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td colSpan={5} className="h-36 px-4 py-8 text-center text-sm text-[#7a8780]">
-                          As leituras aparecerão aqui quando a integração de sensores estiver disponível.
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div className="mt-4">
+                  <LeiturasTabela
+                    linhas={recentes.linhas}
+                    carregando={recentes.carregando}
+                    erro={recentes.erro}
+                    vazio="Nenhuma leitura recebida ainda para os seus sensores."
+                  />
                 </div>
               </section>
             </div>
@@ -235,7 +412,7 @@ export default function Dashboard() {
                   id="dashboard-propriedade"
                   label="Propriedade"
                   value={propriedadeFiltro}
-                  onChange={setPropriedadeFiltro}
+                  onChange={mudarPropriedade}
                   disabled={carregando}
                 >
                   <option value="">Todas as propriedades</option>
@@ -244,32 +421,47 @@ export default function Dashboard() {
                   ))}
                 </FilterSelect>
 
-                <FilterSelect id="dashboard-lote" label="Lote" value={loteFiltro} onChange={setLoteFiltro} disabled>
+                <FilterSelect id="dashboard-lote" label="Lote" value={loteFiltro} onChange={mudarLote} disabled={carregando}>
                   <option value="">Todos os lotes</option>
+                  {lotesDoFiltro.map((lote) => (
+                    <option key={lote.id} value={String(lote.id)}>{lote.identificacao}</option>
+                  ))}
                 </FilterSelect>
 
-                <FilterSelect id="dashboard-sensor" label="Sensor" value={sensorFiltro} onChange={setSensorFiltro} disabled>
+                <FilterSelect id="dashboard-sensor" label="Sensor" value={sensorFiltro} onChange={setSensorFiltro} disabled={carregando}>
                   <option value="">Todos os sensores</option>
+                  {sensoresDoFiltro.map((sensor) => (
+                    <option key={sensor.id} value={String(sensor.id)}>{sensor.codigo}</option>
+                  ))}
                 </FilterSelect>
 
                 <button
                   type="button"
-                  className="min-h-11 rounded-xl bg-[#009B4D] px-5 text-sm font-semibold text-white transition hover:bg-[#008844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/20"
+                  onClick={aplicarFiltros}
+                  disabled={producao.carregando}
+                  className="min-h-11 rounded-xl bg-[#009B4D] px-5 text-sm font-semibold text-white transition hover:bg-[#008844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Aplicar filtros
                 </button>
               </div>
 
-              <div className="mt-6 grid min-h-[320px] place-items-center rounded-2xl border border-dashed border-[#d8e1db] bg-[#fbfdfb] px-5 text-center">
-                <div className="max-w-md">
-                  <Activity size={26} className="mx-auto text-[#009B4D]" aria-hidden="true" />
-                  <h3 className="mt-3 font-semibold text-[#2b3a31]">Acompanhamento preparado para integração</h3>
-                  <p className="mt-2 text-sm leading-6 text-[#75827a]">
-                    Lotes, sensores e leituras serão exibidos aqui quando esses dados estiverem disponíveis pela API.
-                  </p>
-                </div>
+              <div className="mt-6">
+                <LeiturasTabela
+                  linhas={producao.linhas}
+                  carregando={producao.carregando}
+                  erro={producao.erro}
+                  vazio="Nenhuma leitura encontrada para estes filtros."
+                  paginacao={producao.paginacao}
+                  onPagina={(pagina) => void carregarProducao(aplicados, pagina)}
+                />
               </div>
             </section>
+
+            <div className="mt-4">
+              <AlertasPainel estado={alertasProducao} />
+            </div>
+
+            <PrecosMercado />
           </section>
         )}
       </main>

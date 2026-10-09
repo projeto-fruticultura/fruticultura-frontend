@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, LoaderCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
@@ -6,123 +6,108 @@ import {
   AppShell,
   PageBreadcrumb,
 } from '@/components/app/AppShell'
+import { FeedbackMessage } from '@/components/ui/FeedbackMessage'
+import { useAuth } from '@/context/AuthContext'
+import { podeEscrever } from '@/lib/permissoes'
+import { ApiError } from '@/services/api'
+import { culturaService } from '@/services/culturaService'
+import type { Cultura } from '@/types/api'
 
-interface Cultura {
-  id: number
-  nome: string
-  variedade: string | null
-  descricao: string | null
-  temperaturaMin: number
-  temperaturaMax: number
-  umidadeMin: number
-  umidadeMax: number
-}
+import { ErroCampo } from './ErroCampo'
+import {
+  CULTURA_VAZIA,
+  validarCultura,
+  type CulturaErros,
+  type CulturaFormValores,
+} from './validarCultura'
 
 export default function EditarCultura() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { usuario } = useAuth()
 
   const culturaId = Number(id)
+  const idValido = Number.isInteger(culturaId) && culturaId > 0
 
-  const [nome, setNome] = useState('')
-  const [variedade, setVariedade] = useState('')
-  const [descricao, setDescricao] = useState('')
-  const [temperaturaMin, setTemperaturaMin] = useState('')
-  const [temperaturaMax, setTemperaturaMax] = useState('')
-  const [umidadeMin, setUmidadeMin] = useState('')
-  const [umidadeMax, setUmidadeMax] = useState('')
-
+  const [valores, setValores] = useState<CulturaFormValores>(CULTURA_VAZIA)
+  const [erros, setErros] = useState<CulturaErros>({})
   const [cultura, setCultura] = useState<Cultura | null>(null)
-  const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState('')
+  const [carregando, setCarregando] = useState(idValido)
+  const [erro, setErro] = useState(idValido ? '' : 'Identificador de cultura inválido.')
+  const [erroGeral, setErroGeral] = useState('')
+  const [salvando, setSalvando] = useState(false)
 
   useEffect(() => {
-    if (!Number.isInteger(culturaId) || culturaId <= 0) {
-      setErro('Identificador de cultura inválido.')
-      setCarregando(false)
-      return
-    }
+    if (!idValido) return
+
+    let ativo = true
 
     async function carregarCultura() {
       try {
-        const resposta = await fetch(
-          `http://localhost:3000/api/culturas/${culturaId}`,
-        )
-
-        const dados = await resposta.json()
-
-        if (!resposta.ok) {
-          setErro(
-            dados?.erro ||
-              dados?.message ||
-              'Não foi possível carregar a cultura.',
-          )
-          return
-        }
+        const dados = await culturaService.buscarPorId(culturaId)
+        if (!ativo) return
 
         setCultura(dados)
-
-        setNome(dados.nome)
-        setVariedade(dados.variedade ?? '')
-        setDescricao(dados.descricao ?? '')
-        setTemperaturaMin(String(dados.temperaturaMin))
-        setTemperaturaMax(String(dados.temperaturaMax))
-        setUmidadeMin(String(dados.umidadeMin))
-        setUmidadeMax(String(dados.umidadeMax))
+        setValores({
+          nome: dados.nome,
+          variedade: dados.variedade ?? '',
+          descricao: dados.descricao ?? '',
+          temperaturaMin: String(dados.temperaturaMin),
+          temperaturaMax: String(dados.temperaturaMax),
+          umidadeMin: String(dados.umidadeMin),
+          umidadeMax: String(dados.umidadeMax),
+        })
       } catch (error) {
-        console.error('Erro ao carregar cultura:', error)
-        setErro('Não foi possível carregar a cultura.')
+        if (ativo) {
+          setErro(
+            error instanceof ApiError
+              ? error.message
+              : 'Não foi possível carregar a cultura.',
+          )
+        }
       } finally {
-        setCarregando(false)
+        if (ativo) setCarregando(false)
       }
     }
 
     carregarCultura()
-  }, [culturaId])
+
+    return () => {
+      ativo = false
+    }
+  }, [culturaId, idValido])
+
+  function atualizar(campo: keyof CulturaFormValores, valor: string) {
+    setValores((atuais) => ({ ...atuais, [campo]: valor }))
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    setErroGeral('')
+
+    const { erros: errosLocais, payload } = validarCultura(valores)
+    setErros(errosLocais)
+    if (!payload) return
+
+    setSalvando(true)
 
     try {
-      const resposta = await fetch(
-        `http://localhost:3000/api/culturas/${culturaId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            nome,
-            variedade,
-            descricao,
-            temperaturaMin: Number(temperaturaMin),
-            temperaturaMax: Number(temperaturaMax),
-            umidadeMin: Number(umidadeMin),
-            umidadeMax: Number(umidadeMax),
-          }),
-        },
-      )
-
-      const dados = await resposta.json()
-
-      if (!resposta.ok) {
-        console.error('Erro ao atualizar cultura:', dados)
-
-        setErro(
-          dados?.erro ||
-            dados?.message ||
-            'Não foi possível salvar as alterações.',
-        )
-
-        return
-      }
-
+      await culturaService.atualizar(culturaId, payload)
       navigate(`/culturas/${culturaId}`, { replace: true })
     } catch (error) {
-      console.error('Erro ao atualizar cultura:', error)
-      setErro('Não foi possível salvar as alterações.')
+      if (error instanceof ApiError) {
+        setErroGeral(error.message)
+        // Erros por campo vindos do backend aparecem no campo certo.
+        if (error.campos) setErros(error.campos as CulturaErros)
+      } else {
+        setErroGeral('Não foi possível salvar as alterações.')
+      }
+    } finally {
+      setSalvando(false)
     }
   }
+
+  const podeEditar = podeEscrever(usuario?.perfil)
 
   return (
     <AppShell section="culturas">
@@ -159,7 +144,7 @@ export default function EditarCultura() {
 
         {carregando ? (
           <div className="grid min-h-[360px] place-items-center rounded-2xl border border-[#e1e7e3] bg-white">
-            <div className="text-center">
+            <div className="text-center" role="status">
               <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#009B4D]/18 border-t-[#009B4D]" />
 
               <p className="mt-4 text-sm text-[#6d7a72]">
@@ -168,14 +153,23 @@ export default function EditarCultura() {
             </div>
           </div>
         ) : erro ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-            {erro}
-          </div>
+          <FeedbackMessage variant="error">{erro}</FeedbackMessage>
+        ) : !podeEditar ? (
+          <FeedbackMessage variant="info">
+            Seu perfil não tem permissão para editar culturas.
+          </FeedbackMessage>
         ) : (
           <form
             onSubmit={handleSubmit}
+            noValidate
             className="rounded-[24px] border border-[#e1e7e3] bg-white p-6 shadow-sm sm:p-8"
           >
+            {erroGeral ? (
+              <div className="mb-5">
+                <FeedbackMessage variant="error">{erroGeral}</FeedbackMessage>
+              </div>
+            ) : null}
+
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
                 <label
@@ -189,11 +183,12 @@ export default function EditarCultura() {
                   id="nome"
                   name="nome"
                   type="text"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  required
+                  value={valores.nome}
+                  onChange={(e) => atualizar('nome', e.target.value)}
+                  aria-invalid={Boolean(erros.nome)}
                   className="mt-2 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 py-3 text-sm text-[#26352d] outline-none transition placeholder:text-[#8a968f] focus:border-[#009B4D] focus:ring-4 focus:ring-[#009B4D]/10"
                 />
+                <ErroCampo id="nome" mensagem={erros.nome} />
               </div>
 
               <div>
@@ -208,10 +203,12 @@ export default function EditarCultura() {
                   id="variedade"
                   name="variedade"
                   type="text"
-                  value={variedade}
-                  onChange={(e) => setVariedade(e.target.value)}
+                  value={valores.variedade}
+                  onChange={(e) => atualizar('variedade', e.target.value)}
+                  aria-invalid={Boolean(erros.variedade)}
                   className="mt-2 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 py-3 text-sm text-[#26352d] outline-none transition placeholder:text-[#8a968f] focus:border-[#009B4D] focus:ring-4 focus:ring-[#009B4D]/10"
                 />
+                <ErroCampo id="variedade" mensagem={erros.variedade} />
               </div>
 
               <div className="sm:col-span-2">
@@ -225,11 +222,13 @@ export default function EditarCultura() {
                 <textarea
                   id="descricao"
                   name="descricao"
-                  value={descricao}
-                  onChange={(e) => setDescricao(e.target.value)}
+                  value={valores.descricao}
+                  onChange={(e) => atualizar('descricao', e.target.value)}
+                  aria-invalid={Boolean(erros.descricao)}
                   rows={4}
                   className="mt-2 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 py-3 text-sm text-[#26352d] outline-none transition placeholder:text-[#8a968f] focus:border-[#009B4D] focus:ring-4 focus:ring-[#009B4D]/10"
                 />
+                <ErroCampo id="descricao" mensagem={erros.descricao} />
               </div>
 
               <div>
@@ -245,11 +244,12 @@ export default function EditarCultura() {
                   name="temperaturaMin"
                   type="number"
                   step="0.01"
-                  value={temperaturaMin}
-                  onChange={(e) => setTemperaturaMin(e.target.value)}
-                  required
+                  value={valores.temperaturaMin}
+                  onChange={(e) => atualizar('temperaturaMin', e.target.value)}
+                  aria-invalid={Boolean(erros.temperaturaMin)}
                   className="mt-2 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 py-3 text-sm text-[#26352d] outline-none transition focus:border-[#009B4D] focus:ring-4 focus:border-[#E5A72C] focus:ring-4 focus:ring-[#E5A72C]/10 border-l-[5px] border-l-[#E5A72C]"
                 />
+                <ErroCampo id="temperaturaMin" mensagem={erros.temperaturaMin} />
               </div>
 
               <div>
@@ -265,11 +265,12 @@ export default function EditarCultura() {
                   name="temperaturaMax"
                   type="number"
                   step="0.01"
-                  value={temperaturaMax}
-                  onChange={(e) => setTemperaturaMax(e.target.value)}
-                  required
+                  value={valores.temperaturaMax}
+                  onChange={(e) => atualizar('temperaturaMax', e.target.value)}
+                  aria-invalid={Boolean(erros.temperaturaMax)}
                   className="mt-2 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 py-3 text-sm text-[#26352d] outline-none transition focus:border-[#009B4D] focus:ring-4 focus:border-[#E5A72C] focus:ring-4 focus:ring-[#E5A72C]/10 border-l-[5px] border-l-[#E5A72C]"
                 />
+                <ErroCampo id="temperaturaMax" mensagem={erros.temperaturaMax} />
               </div>
 
               <div>
@@ -285,11 +286,12 @@ export default function EditarCultura() {
                   name="umidadeMin"
                   type="number"
                   step="0.01"
-                  value={umidadeMin}
-                  onChange={(e) => setUmidadeMin(e.target.value)}
-                  required
+                  value={valores.umidadeMin}
+                  onChange={(e) => atualizar('umidadeMin', e.target.value)}
+                  aria-invalid={Boolean(erros.umidadeMin)}
                   className="mt-2 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 py-3 text-sm text-[#26352d] outline-none transition focus:border-[#009B4D] focus:ring-4 focus:border-[#39BCE5] focus:ring-4 focus:ring-[#39BCE5]/10 border-l-[5px] border-l-[#39BCE5]"
                 />
+                <ErroCampo id="umidadeMin" mensagem={erros.umidadeMin} />
               </div>
 
               <div>
@@ -305,20 +307,25 @@ export default function EditarCultura() {
                   name="umidadeMax"
                   type="number"
                   step="0.01"
-                  value={umidadeMax}
-                  onChange={(e) => setUmidadeMax(e.target.value)}
-                  required
+                  value={valores.umidadeMax}
+                  onChange={(e) => atualizar('umidadeMax', e.target.value)}
+                  aria-invalid={Boolean(erros.umidadeMax)}
                   className="mt-2 w-full rounded-xl border border-[#dce5df] bg-[#fbfdfb] px-4 py-3 text-sm text-[#26352d] outline-none transition focus:border-[#009B4D] focus:ring-4 focus:border-[#39BCE5] focus:ring-4 focus:ring-[#39BCE5]/10 border-l-[5px] border-l-[#39BCE5]"
                 />
+                <ErroCampo id="umidadeMax" mensagem={erros.umidadeMax} />
               </div>
             </div>
 
             <div className="mt-8 flex justify-end border-t border-[#e8eee9] pt-6">
               <button
                 type="submit"
-                className="rounded-xl bg-[#009B4D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#008642] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/20 cursor-pointer"
+                disabled={salvando}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#009B4D] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#008642] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/20 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Salvar alterações
+                {salvando ? (
+                  <LoaderCircle size={17} className="animate-spin" aria-hidden="true" />
+                ) : null}
+                {salvando ? 'Salvando...' : 'Salvar alterações'}
               </button>
             </div>
           </form>

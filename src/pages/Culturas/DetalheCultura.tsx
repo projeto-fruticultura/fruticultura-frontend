@@ -3,43 +3,49 @@ import { ArrowLeft, Droplets, Leaf, Pencil, Thermometer } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
 import { AppShell, PageBreadcrumb } from "@/components/app/AppShell";
-
-interface Cultura {
-  id: number;
-  nome: string;
-  variedade: string | null;
-  descricao: string | null;
-  temperaturaMin: number;
-  temperaturaMax: number;
-  umidadeMin: number;
-  umidadeMax: number;
-}
+import { useAuth } from "@/context/AuthContext";
+import { podeEscrever } from "@/lib/permissoes";
+import { ApiError } from "@/services/api";
+import { culturaService } from "@/services/culturaService";
+import type { Cultura } from "@/types/api";
 
 export default function DetalheCultura() {
   const { id } = useParams();
+  const { usuario } = useAuth();
+  const podeEditar = podeEscrever(usuario?.perfil);
 
   const [cultura, setCultura] = useState<Cultura | null>(null);
-  const [erro, setErro] = useState(false);
+  const [erro, setErro] = useState("");
+  const [naoEncontrada, setNaoEncontrada] = useState(false);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
+    let ativo = true;
+
     async function carregarCultura() {
-      const resposta = await fetch(`http://localhost:3000/api/culturas/${id}`);
-
-      const dados = await resposta.json();
-
-      if (!resposta.ok) {
-        console.error("Erro ao buscar cultura:", dados);
-        setErro(true);
-        setCarregando(false);
-        return;
+      try {
+        const dados = await culturaService.buscarPorId(Number(id));
+        if (ativo) setCultura(dados);
+      } catch (error) {
+        if (!ativo) return;
+        if (error instanceof ApiError && error.status === 404) {
+          setNaoEncontrada(true);
+        }
+        setErro(
+          error instanceof ApiError
+            ? error.message
+            : "Não foi possível carregar a cultura.",
+        );
+      } finally {
+        if (ativo) setCarregando(false);
       }
-
-      setCultura(dados);
-      setCarregando(false);
     }
 
     carregarCultura();
+
+    return () => {
+      ativo = false;
+    };
   }, [id]);
 
   if (carregando) {
@@ -64,11 +70,15 @@ export default function DetalheCultura() {
             </div>
 
             <h1 className="mt-5 text-2xl font-semibold text-[#18251e]">
-              Cultura não encontrada
+              {naoEncontrada
+                ? "Cultura não encontrada"
+                : "Não foi possível carregar a cultura"}
             </h1>
 
             <p className="mt-2 text-sm text-[#68756d]">
-              A cultura solicitada não está disponível.
+              {naoEncontrada
+                ? "A cultura solicitada não está disponível."
+                : erro}
             </p>
 
             <Link
@@ -153,13 +163,15 @@ export default function DetalheCultura() {
                   Voltar
                 </Link>
 
-                <Link
-                  to={`/culturas/${cultura.id}/editar`}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#009B4D] px-5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(0,155,77,.14)] transition hover:bg-[#008844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/20"
-                >
-                  <Pencil size={17} />
-                  Editar cultura
-                </Link>
+                {podeEditar ? (
+                  <Link
+                    to={`/culturas/${cultura.id}/editar`}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#009B4D] px-5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(0,155,77,.14)] transition hover:bg-[#008844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/20"
+                  >
+                    <Pencil size={17} />
+                    Editar cultura
+                  </Link>
+                ) : null}
               </div>
             </div>
           </div>
