@@ -8,6 +8,9 @@ import {
   MapPinned,
   RefreshCw,
   SlidersHorizontal,
+  Thermometer,
+  Droplets,
+  TrendingUp,
 } from 'lucide-react'
 import { AppShell } from '@/components/app/AppShell'
 import { AlertasPainel, type EstadoAlertas } from '@/components/app/dashboard/AlertasPainel'
@@ -21,6 +24,7 @@ import { leituraService } from '@/services/leituraService'
 import { loteService } from '@/services/loteService'
 import { propriedadeService } from '@/services/propriedadeService'
 import { sensorService } from '@/services/sensorService'
+import { dashboardService, type DashboardResumo, type DashboardMedias } from '@/services/dashboardService'
 import type { Leitura, Lote, Paginacao, PropriedadeResumo, Sensor } from '@/types/api'
 
 type DashboardTab = 'overview' | 'production'
@@ -47,7 +51,6 @@ interface EstadoLeituras {
 const UMA_HORA_MS = 60 * 60 * 1000
 const LEITURAS_POR_PAGINA = 15
 
-// Os nomes de propriedade, lote e sensor vem do catalogo: a leitura so traz o sensorId.
 function montarLinhas(leituras: Leitura[], catalogo: Catalogo, agora: number): LinhaLeitura[] {
   return leituras.map((leitura) => {
     const sensor = catalogo.sensores.find((item) => item.id === leitura.sensorId)
@@ -67,11 +70,9 @@ function montarLinhas(leituras: Leitura[], catalogo: Catalogo, agora: number): L
   })
 }
 
-// 404 = o backend nao tem a rota de alertas: a tela mostra "indisponiveis" e segue funcionando.
 async function buscarAlertas(filtros: FiltrosAplicados = {}): Promise<EstadoAlertas> {
   try {
     const resposta = await alertaService.listar({ propriedadeId: filtros.propriedadeId, loteId: filtros.loteId })
-    // O filtro por sensor so existe no front: a rota filtra por propriedade e por lote.
     const alertas = filtros.sensorId
       ? resposta.alertas.filter((alerta) => alerta.sensorId === filtros.sensorId)
       : resposta.alertas
@@ -93,6 +94,10 @@ export default function Dashboard() {
   const [sensores, setSensores] = useState<Sensor[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  
+  // Estados integrados do dashboard
+  const [resumoGeral, setResumoGeral] = useState<DashboardResumo | null>(null)
+  const [mediasGerais, setMediasGerais] = useState<DashboardMedias | null>(null)
   const [alertasGerais, setAlertasGerais] = useState<EstadoAlertas>({ status: 'carregando' })
   const [recentes, setRecentes] = useState<EstadoLeituras>({ carregando: true, erro: '', linhas: [] })
 
@@ -104,12 +109,10 @@ export default function Dashboard() {
   const [producao, setProducao] = useState<EstadoLeituras>({ carregando: false, erro: '', linhas: [] })
   const [alertasProducao, setAlertasProducao] = useState<EstadoAlertas>({ status: 'carregando' })
 
-  // Catalogo mais recente, lido tambem por funcoes assincronas que rodam depois de a tela mudar.
   const catalogo = useRef<Catalogo>({ propriedades: [], lotes: [], sensores: [] })
 
   async function carregarRecentes() {
     setRecentes((atual) => ({ ...atual, carregando: true, erro: '' }))
-
     try {
       const resposta = await leituraService.listar({ limite: 10 })
       setRecentes({ carregando: false, erro: '', linhas: montarLinhas(resposta.dados, catalogo.current, Date.now()) })
@@ -127,19 +130,24 @@ export default function Dashboard() {
     setErro('')
     setAlertasGerais({ status: 'carregando' })
 
-    // Os alertas nao dependem do restante: buscam em paralelo (e nunca rejeitam).
     const pedidoAlertas = buscarAlertas()
+    const pedidoResumo = dashboardService.resumo()
+    const pedidoMedias = dashboardService.medias({ agrupar: 'hour' })
 
     try {
-      const [listaPropriedades, listaLotes, listaSensores] = await Promise.all([
+      const [listaPropriedades, listaLotes, listaSensores, dadosResumo, dadosMedias] = await Promise.all([
         propriedadeService.listar(),
         loteService.listar(),
         sensorService.listar(),
+        pedidoResumo,
+        pedidoMedias,
       ])
       catalogo.current = { propriedades: listaPropriedades, lotes: listaLotes, sensores: listaSensores }
       setPropriedades(listaPropriedades)
       setLotes(listaLotes)
       setSensores(listaSensores)
+      setResumoGeral(dadosResumo)
+      setMediasGerais(dadosMedias)
     } catch (error) {
       setErro(error instanceof ApiError ? error.message : 'Não foi possível carregar os dados do dashboard.')
     } finally {
@@ -208,11 +216,11 @@ export default function Dashboard() {
     setSensorFiltro('')
   }
 
-  // Os seletores se afunilam: lotes da propriedade escolhida e sensores do lote (ou da propriedade) escolhido.
   const lotesDoFiltro = useMemo(
     () => (propriedadeFiltro ? lotes.filter((lote) => String(lote.propriedadeId) === propriedadeFiltro) : lotes),
     [lotes, propriedadeFiltro],
   )
+
   const sensoresDoFiltro = useMemo(() => {
     if (loteFiltro) return sensores.filter((sensor) => String(sensor.loteId) === loteFiltro)
     if (propriedadeFiltro) {
@@ -231,8 +239,7 @@ export default function Dashboard() {
     [propriedades],
   )
 
-  const alertasValor =
-    alertasGerais.status === 'ok' ? alertasGerais.total : '—'
+  const alertasValor = alertasGerais.status === 'ok' ? alertasGerais.total : '—'
   const alertasAjuda =
     alertasGerais.status === 'indisponivel'
       ? 'Alertas indisponíveis'
@@ -320,8 +327,8 @@ export default function Dashboard() {
                   accent="bg-[#4aa7e8]"
                 />
                 <MetricCard
-                  label="Sensores"
-                  value={carregando ? '—' : totals.sensores}
+                  label="Sensores Ativos"
+                  value={carregando ? '—' : (resumoGeral?.sensoresAtivos ?? totals.sensores)}
                   icon={Cpu}
                   accent="bg-[#9858dd]"
                 />
@@ -333,7 +340,61 @@ export default function Dashboard() {
                   helper={alertasAjuda}
                 />
               </div>
+
+              {/* Cards de médias das últimas 24h */}
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <MetricCard
+                  label="Temperatura Média (Últimas 24h)"
+                  value={carregando ? '—' : resumoGeral?.temperaturaMedia !== null && resumoGeral?.temperaturaMedia !== undefined ? `${resumoGeral.temperaturaMedia}°C` : 'Sem dados'}
+                  icon={Thermometer}
+                  accent="bg-[#e056fd]"
+                />
+                <MetricCard
+                  label="Umidade Média (Últimas 24h)"
+                  value={carregando ? '—' : resumoGeral?.umidadeMedia !== null && resumoGeral?.umidadeMedia !== undefined ? `${resumoGeral.umidadeMedia}%` : 'Sem dados'}
+                  icon={Droplets}
+                  accent="bg-[#00d2d3]"
+                />
+              </div>
             </div>
+
+            {/* Nova seção visualizando os dados de Médias por Horário (Mock / API) */}
+            <section className="mt-4 rounded-[22px] border border-[#e0e7e2] bg-white p-5 shadow-sm sm:p-6" aria-labelledby="medias-chart-title">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 id="medias-chart-title" className="text-base font-semibold text-[#1d2b23]">Evolução Horária (Últimas 24h)</h2>
+                  <p className="mt-1 text-xs text-[#7a8780]">Médias de temperatura e umidade agrupadas por hora</p>
+                </div>
+                <TrendingUp size={18} className="text-[#168150]" aria-hidden="true" />
+              </div>
+
+              <div className="mt-4 overflow-x-auto">
+                {carregando ? (
+                  <div className="grid min-h-32 place-items-center text-sm text-[#6f7c74]">Carregando evoluções...</div>
+                ) : mediasGerais?.dados && mediasGerais.dados.length > 0 ? (
+                  <div className="flex gap-3 pb-2">
+                    {mediasGerais.dados.map((item, idx) => {
+                      const horaFormatada = new Date(item.periodo).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      return (
+                        <div key={idx} className="flex min-w-[110px] flex-col rounded-xl border border-[#e6ece8] bg-[#fbfcfb] p-3 text-center">
+                          <span className="text-xs font-semibold text-[#5f6d65]">{horaFormatada}</span>
+                          <div className="mt-2 flex items-center justify-center gap-1 text-xs font-medium text-[#e056fd]">
+                            <Thermometer size={14} />
+                            <span>{item.temperaturaMedia}°C</span>
+                          </div>
+                          <div className="mt-1 flex items-center justify-center gap-1 text-xs font-medium text-[#00d2d3]">
+                            <Droplets size={14} />
+                            <span>{item.umidadeMedia}%</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="grid min-h-32 place-items-center text-sm text-[#6f7c74]">Nenhum dado de média disponível.</div>
+                )}
+              </div>
+            </section>
 
             <div className="mt-4">
               <AlertasPainel estado={alertasGerais} />
@@ -503,6 +564,8 @@ interface FilterSelectProps {
   disabled?: boolean
   children: ReactNode
 }
+
+FilterSelect.displayName = 'FilterSelect'
 
 function FilterSelect({ id, label, value, onChange, disabled = false, children }: FilterSelectProps) {
   return (
