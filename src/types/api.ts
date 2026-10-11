@@ -9,6 +9,13 @@ export interface Usuario {
   status: StatusRegistro
 }
 
+export interface UsuarioPayload {
+  nome: string
+  email: string
+  senha: string
+  perfil: PerfilUsuario
+}
+
 export interface LoginResponse {
   token: string
   usuario: Usuario

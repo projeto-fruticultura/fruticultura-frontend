@@ -1,4 +1,17 @@
-import { Bell, ChevronRight, Cpu, LayoutDashboard, Leaf, LogOut, Menu, Sprout, X, ChartNoAxesCombined, MapPinned  } from 'lucide-react'
+import {
+  Bell,
+  ChevronRight,
+  Cpu,
+  LayoutDashboard,
+  Leaf,
+  LogOut,
+  Menu,
+  Sprout,
+  X,
+  ChartNoAxesCombined,
+  MapPinned,
+  Users,
+} from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
@@ -6,16 +19,15 @@ import { PwaInstallButton } from '@/components/ui/PwaInstallButton'
 
 interface AppShellProps {
   children: ReactNode
-  section?: 'overview' | 'properties' | 'culturas' | 'sensores' | 'lotes'
+  section?: 'overview' | 'properties' | 'culturas' | 'sensores' | 'lotes' | 'usuarios'
 }
 
-const navItems = [
+const baseNavItems = [
   { label: 'Visão geral', to: '/painel', icon: LayoutDashboard, key: 'overview' as const },
   { label: 'Propriedades', to: '/propriedades', icon: Leaf, key: 'properties' as const },
   { label: 'Culturas', to: '/culturas', icon: Sprout, key: 'culturas' as const },
-  { label: 'lotes', to: '/lotes', icon: MapPinned , key: 'lotes' as const },
+  { label: 'Lotes', to: '/lotes', icon: MapPinned, key: 'lotes' as const },
   { label: 'Sensores', to: '/sensores', icon: Cpu, key: 'sensores' as const },
-  
 ]
 
 function formatCurrentDate() {
@@ -42,6 +54,14 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
   const { usuario, sair } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // Adiciona a rota de usuários na sidebar apenas se o usuário for ADMIN
+  const navItems = usuario?.perfil === 'ADMIN'
+    ? [
+        ...baseNavItems,
+        { label: 'Usuários', to: '/usuarios', icon: Users, key: 'usuarios' as const },
+      ]
+    : baseNavItems
+
   const sidebarContent = (
     <>
       <div className="flex min-h-[76px] items-center justify-between border-b border-white/10 px-5">
@@ -50,12 +70,12 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
           className="h-12 flex items-center" 
           onClick={() => setMobileMenuOpen(false)}
         >
-        <img 
-          src="/public/assets/logo-valesafra.svg" 
-          alt="Logo ValeSafra" 
-          className="h-8 w-auto" 
-        />
-      </Link>
+          <img 
+            src="/public/assets/logo-valesafra.svg" 
+            alt="Logo ValeSafra" 
+            className="h-8 w-auto" 
+          />
+        </Link>
         <button
           type="button"
           onClick={() => setMobileMenuOpen(false)}
