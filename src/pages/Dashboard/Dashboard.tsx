@@ -132,7 +132,7 @@ export default function Dashboard() {
 
     const pedidoAlertas = buscarAlertas()
     const pedidoResumo = dashboardService.resumo()
-    const pedidoMedias = dashboardService.medias({ agrupar: 'hour' })
+    const pedidoMedias = dashboardService.medias({ agrupar: 'hora' })
 
     try {
       const [listaPropriedades, listaLotes, listaSensores, dadosResumo, dadosMedias] = await Promise.all([
