@@ -103,7 +103,7 @@ export default function Home() {
           <div className="relative overflow-hidden rounded-[30px] border border-white bg-[#dfeee5] shadow-[0_28px_80px_rgba(31,41,51,0.12)] sm:rounded-[36px]">
             <div className="aspect-[4/3] min-h-[380px] lg:min-h-[560px]">
               <img
-                src="/assets/auth-orchard.png"
+                src="/assets/orchard-bg.png"
                 alt="Pomar de laranjeiras representando a produção agrícola conectada"
                 className="h-full w-full object-cover object-center"
               />

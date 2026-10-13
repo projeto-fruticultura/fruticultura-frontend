@@ -22,6 +22,7 @@ import NovoLote from "@/pages/Lotes/NovoLote";
 import EditarLote from "@/pages/Lotes/EditarLote";
 import Usuarios from "@/pages/Usuarios/Usuarios";
 import NovoUsuario from "@/pages/Usuarios/NovoUsuario";
+import EditarUsuario from "@/pages/Usuarios/EditarUsuario";
 
 export function AppRoutes() {
   return (
@@ -37,6 +38,7 @@ export function AppRoutes() {
             <Route path="/painel" element={<Dashboard />} />
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/usuarios/novo" element={<NovoUsuario />} />
+            <Route path="/usuarios/:id/editar" element={<EditarUsuario />} />
             <Route path="/propriedades" element={<Propriedades />} />
             <Route path="/propriedades/nova" element={<NovaPropriedade />} />
             <Route path="/propriedades/:id" element={<DetalhePropriedade />} />

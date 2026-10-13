@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'valesafra-pwa-v1'
+const CACHE_VERSION = 'valesafra-pwa-v2'
 const STATIC_CACHE = `${CACHE_VERSION}-static`
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`
 
@@ -7,7 +7,7 @@ const APP_SHELL = [
   '/manifest.webmanifest',
   '/offline.html',
   '/assets/valesafra-logo.png',
-  '/assets/auth-orchard.png',
+  '/assets/orchard-bg.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png'
