@@ -71,7 +71,7 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
           onClick={() => setMobileMenuOpen(false)}
         >
           <img 
-            src="/public/assets/logo-valesafra.svg" 
+            src="/assets/logo-valesafra.svg" 
             alt="Logo ValeSafra" 
             className="h-8 w-auto" 
           />
