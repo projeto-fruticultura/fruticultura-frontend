@@ -11,6 +11,7 @@ import {
   ChartNoAxesCombined,
   MapPinned,
   Users,
+  Settings
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
@@ -50,30 +51,64 @@ function getInitials(name?: string) {
     .join('')
 }
 
-export function AppShell({ children, section = 'properties' }: AppShellProps) {
-  const { usuario, sair } = useAuth()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+export function AppShell({ children, section = "properties" }: AppShellProps) {
+  const { usuario, sair } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Adiciona a rota de usuários na sidebar apenas se o usuário for ADMIN
-  const navItems = usuario?.perfil === 'ADMIN'
-    ? [
-        ...baseNavItems,
-        { label: 'Usuários', to: '/usuarios', icon: Users, key: 'usuarios' as const },
-      ]
-    : baseNavItems
+  // Adiciona a rota de usuários na sidebar se o usuário for ADMIN ou TECNICO
+  // Define os itens do menu conforme o perfil do usuário
+  const navItems =
+    usuario?.perfil === "ADMIN"
+      ? [
+          ...baseNavItems,
+          {
+            label: "Usuários",
+            to: "/usuarios",
+            icon: Users,
+            key: "usuarios" as const,
+          },
+        ]
+      : usuario?.perfil === "TECNICO"
+        ? [
+            {
+              label: "Visão geral",
+              to: "/sensores",
+              icon: LayoutDashboard,
+              key: "overview" as const,
+            },
+            {
+              label: "Propriedades",
+              to: "/propriedades",
+              icon: Leaf,
+              key: "properties" as const,
+            },
+            {
+              label: "Lotes",
+              to: "/lotes",
+              icon: MapPinned,
+              key: "lotes" as const,
+            },
+            {
+              label: "Configuração IoT",
+              to: "/sensores/config",
+              icon: Settings,
+              key: "iot" as const,
+            },
+          ]
+        : baseNavItems;
 
   const sidebarContent = (
     <>
       <div className="flex min-h-[76px] items-center justify-between border-b border-white/10 px-5">
         <Link
           to="/painel"
-          className="h-12 flex items-center" 
+          className="h-12 flex items-center"
           onClick={() => setMobileMenuOpen(false)}
         >
-          <img 
-            src="/assets/logo-valesafra.svg" 
-            alt="Logo ValeSafra" 
-            className="h-8 w-auto" 
+          <img
+            src="/assets/logo-valesafra.svg"
+            alt="Logo ValeSafra"
+            className="h-8 w-auto"
           />
         </Link>
         <button
@@ -86,17 +121,21 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
         </button>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-5" aria-label="Navegação da plataforma">
+      <nav
+        className="flex-1 space-y-1 px-3 py-5"
+        aria-label="Navegação da plataforma"
+      >
         {navItems.map(({ label, to, icon: Icon, key }) => (
           <NavLink
             key={to}
             to={to}
+            end={usuario?.perfil === "TECNICO" && to === "/sensores"}
             onClick={() => setMobileMenuOpen(false)}
             className={({ isActive }) =>
               `flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
                 isActive || section === key
-                  ? 'bg-[#063b2d] text-white shadow-sm'
-                  : 'text-white/82 hover:bg-white/10 hover:text-white'
+                  ? "bg-[#063b2d] text-white shadow-sm"
+                  : "text-white/82 hover:bg-white/10 hover:text-white"
               }`
             }
           >
@@ -106,10 +145,15 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
         ))}
 
         <div className="mt-4 border-t border-white/10 pt-4">
-          <div className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-white/45" aria-disabled="true">
+          <div
+            className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-white/45"
+            aria-disabled="true"
+          >
             <ChartNoAxesCombined size={18} aria-hidden="true" />
             <span className="flex-1">Dados de Mercado</span>
-            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">Em breve</span>
+            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+              Em breve
+            </span>
           </div>
         </div>
       </nav>
@@ -125,7 +169,7 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
         </button>
       </div>
     </>
-  )
+  );
 
   return (
     <div className="min-h-[100dvh] bg-[#f5f8f6] text-[#1F2933] lg:grid lg:grid-cols-[244px_minmax(0,1fr)]">
@@ -134,7 +178,12 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
       </aside>
 
       {mobileMenuOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu de navegação">
+        <div
+          className="fixed inset-0 z-50 lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu de navegação"
+        >
           <button
             type="button"
             className="absolute inset-0 bg-black/35 backdrop-blur-[2px]"
@@ -160,8 +209,12 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
                 <Menu size={20} />
               </button>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#819087]">Hoje</p>
-                <p className="mt-0.5 text-sm font-semibold text-[#33433b]">{formatCurrentDate()}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#819087]">
+                  Hoje
+                </p>
+                <p className="mt-0.5 text-sm font-semibold text-[#33433b]">
+                  {formatCurrentDate()}
+                </p>
               </div>
             </div>
 
@@ -176,12 +229,19 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
                 <Bell size={18} />
               </button>
 
-              <div className="hidden h-8 w-px bg-[#e1e7e3] sm:block" aria-hidden="true" />
+              <div
+                className="hidden h-8 w-px bg-[#e1e7e3] sm:block"
+                aria-hidden="true"
+              />
 
               <div className="flex items-center gap-2 rounded-full bg-[#f3f6f4] py-1.5 pl-3 pr-1.5">
                 <div className="hidden text-right sm:block">
-                  <p className="max-w-[180px] truncate text-xs font-semibold text-[#334139]">{usuario?.nome ?? 'Usuário ValeSafra'}</p>
-                  <p className="mt-0.5 text-[10px] uppercase tracking-wide text-[#7b887f]">{usuario?.perfil ?? 'Conta'}</p>
+                  <p className="max-w-[180px] truncate text-xs font-semibold text-[#334139]">
+                    {usuario?.nome ?? "Usuário ValeSafra"}
+                  </p>
+                  <p className="mt-0.5 text-[10px] uppercase tracking-wide text-[#7b887f]">
+                    {usuario?.perfil ?? "Conta"}
+                  </p>
                 </div>
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#009B4D] text-[11px] font-bold text-white">
                   {getInitials(usuario?.nome)}
@@ -194,7 +254,7 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
         <main className="min-h-[calc(100dvh-68px)]">{children}</main>
       </div>
     </div>
-  )
+  );
 }
 
 export function PageBreadcrumb({ items }: { items: Array<{ label: string; to?: string }> }) {

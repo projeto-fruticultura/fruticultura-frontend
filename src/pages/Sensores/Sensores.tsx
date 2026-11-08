@@ -2,6 +2,7 @@ import { Cpu, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import Diagnostico from './Diagnostico'
 import { AppShell } from '@/components/app/AppShell'
 import { FeedbackMessage } from '@/components/ui/FeedbackMessage'
 import { useAuth } from '@/context/AuthContext'
@@ -14,6 +15,16 @@ import type { Sensor } from '@/types/api'
 import { rotuloTipoSensor } from './tiposSensor'
 
 export default function Sensores() {
+  const { usuario } = useAuth()
+
+  if (usuario?.perfil === 'TECNICO') {
+    return <Diagnostico />
+  }
+
+  return <ListaSensores />
+}
+
+function ListaSensores() {
   const { usuario } = useAuth()
   const podeEditar = podeEscrever(usuario?.perfil)
 
