@@ -23,6 +23,7 @@ import EditarLote from "@/pages/Lotes/EditarLote";
 import Usuarios from "@/pages/Usuarios/Usuarios";
 import NovoUsuario from "@/pages/Usuarios/NovoUsuario";
 import EditarUsuario from "@/pages/Usuarios/EditarUsuario";
+import ConfiguracaoIoT from "@/pages/Sensores/ConfiguracaoIoT";
 
 export function AppRoutes() {
   return (
@@ -49,6 +50,7 @@ export function AppRoutes() {
             <Route path="/culturas" element={<Culturas />} />
             <Route path="/culturas/nova" element={<NovaCultura />} />
             <Route path="/sensores" element={<Sensores />} />
+            <Route path="/sensores/config" element={<ConfiguracaoIoT />} />
             <Route path="/lotes" element={<Lotes />} />
             <Route path="/lotes/novo" element={<NovoLote />} />
             <Route path="/lotes/:id/editar" element={<EditarLote />} />
