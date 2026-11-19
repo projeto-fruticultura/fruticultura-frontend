@@ -23,6 +23,22 @@ import EditarLote from "@/pages/Lotes/EditarLote";
 import Usuarios from "@/pages/Usuarios/Usuarios";
 import NovoUsuario from "@/pages/Usuarios/NovoUsuario";
 import EditarUsuario from "@/pages/Usuarios/EditarUsuario";
+import PainelProdutor from "@/pages/Produtor/PainelProdutor";
+import Logistica from "@/pages/Logistica/Logistica";
+import Mercado from "@/pages/Mercado/Mercado";
+import { useAuth } from "@/context/AuthContext";
+import { type ReactNode } from "react";
+
+function RotaProdutor({ children }: { children: ReactNode }) {
+  const { usuario } = useAuth();
+  return usuario?.perfil === "PRODUTOR" ? children : <Navigate to="/painel" replace />;
+}
+
+// O perfil PRODUTOR recebe o painel específico sem alterar o Dashboard compartilhado.
+function PainelPorPerfil() {
+  const { usuario } = useAuth();
+  return usuario?.perfil === "PRODUTOR" ? <PainelProdutor /> : <Dashboard />;
+}
 
 export function AppRoutes() {
   return (
@@ -35,7 +51,9 @@ export function AppRoutes() {
           <Route path="/esqueci-senha" element={<EsqueciSenha />} />
 
           <Route element={<ProtectedRoute />}>
-            <Route path="/painel" element={<Dashboard />} />
+            <Route path="/painel" element={<PainelPorPerfil />} />
+            <Route path="/logistica" element={<RotaProdutor><Logistica /></RotaProdutor>} />
+            <Route path="/mercado" element={<RotaProdutor><Mercado /></RotaProdutor>} />
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/usuarios/novo" element={<NovoUsuario />} />
             <Route path="/usuarios/:id/editar" element={<EditarUsuario />} />

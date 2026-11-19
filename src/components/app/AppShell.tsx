@@ -11,6 +11,7 @@ import {
   ChartNoAxesCombined,
   MapPinned,
   Users,
+  Truck,
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
@@ -19,7 +20,7 @@ import { PwaInstallButton } from '@/components/ui/PwaInstallButton'
 
 interface AppShellProps {
   children: ReactNode
-  section?: 'overview' | 'properties' | 'culturas' | 'sensores' | 'lotes' | 'usuarios'
+  section?: 'overview' | 'properties' | 'culturas' | 'sensores' | 'lotes' | 'usuarios' | 'logistica' | 'mercado'
 }
 
 const baseNavItems = [
@@ -54,13 +55,18 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
   const { usuario, sair } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  // Adiciona a rota de usuários na sidebar apenas se o usuário for ADMIN
   const navItems = usuario?.perfil === 'ADMIN'
     ? [
         ...baseNavItems,
         { label: 'Usuários', to: '/usuarios', icon: Users, key: 'usuarios' as const },
       ]
-    : baseNavItems
+    : usuario?.perfil === 'PRODUTOR'
+      ? [
+          ...baseNavItems,
+          { label: 'Logística', to: '/logistica', icon: Truck, key: 'logistica' as const },
+          { label: 'Mercado', to: '/mercado', icon: ChartNoAxesCombined, key: 'mercado' as const },
+        ]
+      : baseNavItems
 
   const sidebarContent = (
     <>
@@ -105,13 +111,16 @@ export function AppShell({ children, section = 'properties' }: AppShellProps) {
           </NavLink>
         ))}
 
-        <div className="mt-4 border-t border-white/10 pt-4">
-          <div className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-white/45" aria-disabled="true">
+        {usuario?.perfil !== "PRODUTOR" ? <div className="mt-4 border-t border-white/10 pt-4">
+          <div
+            className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-white/45"
+            aria-disabled="true"
+          >
             <ChartNoAxesCombined size={18} aria-hidden="true" />
             <span className="flex-1">Dados de Mercado</span>
             <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">Em breve</span>
           </div>
-        </div>
+        </div> : null}
       </nav>
 
       <div className="border-t border-white/10 p-3">
