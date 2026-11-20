@@ -28,6 +28,7 @@ import Logistica from "@/pages/Logistica/Logistica";
 import Mercado from "@/pages/Mercado/Mercado";
 import { useAuth } from "@/context/AuthContext";
 import { type ReactNode } from "react";
+import ConfiguracaoIoT from "@/pages/Sensores/ConfiguracaoIoT";
 
 function RotaProdutor({ children }: { children: ReactNode }) {
   const { usuario } = useAuth();
@@ -67,6 +68,7 @@ export function AppRoutes() {
             <Route path="/culturas" element={<Culturas />} />
             <Route path="/culturas/nova" element={<NovaCultura />} />
             <Route path="/sensores" element={<Sensores />} />
+            <Route path="/sensores/config" element={<ConfiguracaoIoT />} />
             <Route path="/lotes" element={<Lotes />} />
             <Route path="/lotes/novo" element={<NovoLote />} />
             <Route path="/lotes/:id/editar" element={<EditarLote />} />

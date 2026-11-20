@@ -15,8 +15,11 @@ import { FeedbackMessage } from "@/components/ui/FeedbackMessage";
 import { ApiError } from "@/services/api";
 import { propriedadeService } from "@/services/propriedadeService";
 import type { PropriedadeResumo } from "@/types/api";
+import { useAuth } from '@/context/AuthContext'
 
 export default function Propriedades() {
+  const { usuario } = useAuth()
+  const somenteLeitura = usuario?.perfil === 'TECNICO'
   const [propriedades, setPropriedades] = useState<PropriedadeResumo[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -104,7 +107,7 @@ export default function Propriedades() {
                 produção.
               </p>
             </div>
-
+{!somenteLeitura && (
             <Link
               to="/propriedades/nova"
               className="inline-flex min-h-12 items-center justify-center gap-2 self-start rounded-xl bg-[#009B4D] px-5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(0,155,77,.16)] transition hover:bg-[#008844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/20 lg:self-auto"
@@ -112,6 +115,7 @@ export default function Propriedades() {
               <Plus size={18} aria-hidden="true" />
               Adicionar propriedade
             </Link>
+            )}
           </div>
         </section>
 
@@ -216,14 +220,14 @@ export default function Propriedades() {
                   ? "Ajuste o termo de busca ou limpe o filtro."
                   : "Cadastre a primeira propriedade para começar a organizar a produção."}
               </p>
-              {!query ? (
-                <Link
-                  to="/propriedades/nova"
-                  className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#009B4D] px-4 text-sm font-semibold text-white hover:bg-[#008844]"
-                >
-                  <Plus size={17} /> Adicionar propriedade
-                </Link>
-              ) : null}
+              {!query && !somenteLeitura ? (
+  <Link
+    to="/propriedades/nova"
+    className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#009B4D] px-4 text-sm font-semibold text-white hover:bg-[#008844]"
+  >
+    <Plus size={17} /> Adicionar propriedade
+  </Link>
+) : null}
             </div>
           ) : (
             <div className="mt-5 space-y-3">
@@ -251,30 +255,38 @@ export default function Propriedades() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                      <Link
-                        to={`/propriedades/${item.id}`}
-                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#b9dec8] bg-[#f8fdf9] px-3.5 text-sm font-semibold text-[#0b7c49] transition hover:bg-[#edf8f1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
-                      >
-                        <Eye size={16} aria-hidden="true" /> Ver detalhes
-                      </Link>
-                      <Link
-                        to={`/culturas/${item.id}/editar`}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#D9A31A] text-[#9A7000] transition hover:bg-[#FFF9E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9A31A]"
-                        aria-label={`Editar ${item.nome}`}
-                      >
-                        <Edit3 size={17} aria-hidden="true" />
-                      </Link>
+  {/* Visível para todos os perfis */}
+  <Link
+    to={`/propriedades/${item.id}`}
+    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#b9dec8] bg-[#f8fdf9] px-3.5 text-sm font-semibold text-[#0b7c49] transition hover:bg-[#edf8f1]"
+  >
+    <Eye size={16} aria-hidden="true" />
+    Ver detalhes
+  </Link>
 
-                      <button
-                        type="button"
-                        onClick={() => void remover(item)}
-                        disabled={excluindoId === item.id}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-400 text-red-600 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                        aria-label={`Excluir ${item.nome}`}
-                      >
-                        <Trash2 size={17} aria-hidden="true" />
-                      </button>
-                    </div>
+  {/* Visível somente para quem pode editar */}
+  {!somenteLeitura && (
+    <>
+      <Link
+        to={`/propriedades/${item.id}/editar`}
+        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#D9A31A] text-[#9A7000] transition hover:bg-[#FFF9E8]"
+        aria-label={`Editar ${item.nome}`}
+      >
+        <Edit3 size={17} aria-hidden="true" />
+      </Link>
+
+      <button
+        type="button"
+        onClick={() => void remover(item)}
+        disabled={excluindoId === item.id}
+        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-400 text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+        aria-label={`Excluir ${item.nome}`}
+      >
+        <Trash2 size={17} aria-hidden="true" />
+      </button>
+    </>
+  )}
+</div>
                   </div>
                 </article>
               ))}
