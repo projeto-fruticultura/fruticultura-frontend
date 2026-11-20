@@ -155,7 +155,7 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
               Em breve
             </span>
           </div>
-        </div> : null}
+        </div> : null
       </nav>
 
       <div className="border-t border-white/10 p-3">
