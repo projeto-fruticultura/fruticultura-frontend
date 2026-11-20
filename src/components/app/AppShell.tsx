@@ -20,7 +20,7 @@ import { PwaInstallButton } from '@/components/ui/PwaInstallButton'
 
 interface AppShellProps {
   children: ReactNode
-  section?: 'overview' | 'properties' | 'culturas' | 'sensores' | 'lotes' | 'usuarios'
+  section?: 'overview' | 'properties' | 'culturas' | 'sensores' | 'lotes' | 'usuarios' | 'logistica' | 'mercado'
 }
 
 const baseNavItems = [
@@ -155,7 +155,7 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
               Em breve
             </span>
           </div>
-        </div>
+        </div> : null}
       </nav>
 
       <div className="border-t border-white/10 p-3">

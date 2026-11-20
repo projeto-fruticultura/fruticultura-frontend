@@ -36,7 +36,9 @@ export function AppRoutes() {
           <Route path="/esqueci-senha" element={<EsqueciSenha />} />
 
           <Route element={<ProtectedRoute />}>
-            <Route path="/painel" element={<Dashboard />} />
+            <Route path="/painel" element={<PainelPorPerfil />} />
+            <Route path="/logistica" element={<RotaProdutor><Logistica /></RotaProdutor>} />
+            <Route path="/mercado" element={<RotaProdutor><Mercado /></RotaProdutor>} />
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/usuarios/novo" element={<NovoUsuario />} />
             <Route path="/usuarios/:id/editar" element={<EditarUsuario />} />
