@@ -35,6 +35,14 @@ export interface PropriedadeResumo {
   totalSensores: number
 }
 
+export interface PropriedadeVinculada {
+  id: number
+  nome: string
+  cidade: string
+  uf: string
+  status: StatusRegistro
+}
+
 export interface PropriedadeDetalhe extends PropriedadeResumo {
   area: number
   latitude: number

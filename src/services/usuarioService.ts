@@ -1,5 +1,9 @@
 import { apiRequest } from '@/services/api'
-import type { Usuario, UsuarioPayload } from '@/types/api'
+import type {
+  Usuario,
+  UsuarioPayload,
+  PropriedadeVinculada,
+} from '@/types/api'
 
 export const usuarioService = {
   listar() {
@@ -30,5 +34,21 @@ export const usuarioService = {
     return apiRequest<void>(`/usuarios/${id}/reativar`, {
       method: 'PATCH',
     })
+  },
+
+    listarPropriedades(id: number) {
+    return apiRequest<PropriedadeVinculada[]>(
+      `/usuarios/${id}/propriedades`
+    )
+  },
+
+  vincularPropriedades(id: number, propriedadeIds: number[]) {
+    return apiRequest<PropriedadeVinculada[]>(
+      `/usuarios/${id}/propriedades`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ propriedadeIds }),
+      }
+    )
   },
 }
