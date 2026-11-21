@@ -2,86 +2,233 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertDialog } from '@base-ui/react/alert-dialog'
-import { Pencil, Plus, UserCheck, Users, UserX } from 'lucide-react'
+import { MapPin, Pencil, Plus, UserCheck, Users, UserX } from 'lucide-react'
+import { Dialog } from '@base-ui/react/dialog'
 
+import { propriedadeService } from '@/services/propriedadeService'
 import { AppShell } from '@/components/app/AppShell'
 import { Button } from '@/components/ui/button'
 import { FeedbackMessage } from '@/components/ui/FeedbackMessage'
 import { useAuth } from '@/context/AuthContext'
 import { ApiError } from '@/services/api'
 import { usuarioService } from '@/services/usuarioService'
-import type { Usuario } from '@/types/api'
+import type { PropriedadeResumo, Usuario } from '@/types/api'
 
 export default function Usuarios() {
-  const { usuario } = useAuth()
-  const isAdmin = usuario?.perfil === 'ADMIN'
+  const { usuario } = useAuth();
+  const isAdmin = usuario?.perfil === "ADMIN";
 
-  const [usuarios, setUsuarios] = useState<Usuario[]>([])
-  const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState('')
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
 
   // Controle das ações administrativas.
-  const [acaoPendente, setAcaoPendente] = useState<Usuario | null>(null)
-  const [processando, setProcessando] = useState(false)
-  const [mensagemSucesso, setMensagemSucesso] = useState('')
-  const [erroAcao, setErroAcao] = useState('')
-  const [listaDesatualizada, setListaDesatualizada] = useState(false)
+  const [acaoPendente, setAcaoPendente] = useState<Usuario | null>(null);
+  const [processando, setProcessando] = useState(false);
+  const [mensagemSucesso, setMensagemSucesso] = useState("");
+  const [erroAcao, setErroAcao] = useState("");
+  const [listaDesatualizada, setListaDesatualizada] = useState(false);
+
+  // Gerenciamento de propriedades vinculadas aos Técnicos.
+  const [tecnicoSelecionado, setTecnicoSelecionado] = useState<Usuario | null>(
+    null,
+  );
+  const [propriedadesDisponiveis, setPropriedadesDisponiveis] = useState<
+    PropriedadeResumo[]
+  >([]);
+  const [propriedadesSelecionadas, setPropriedadesSelecionadas] = useState<
+    number[]
+  >([]);
+  const [carregandoVinculos, setCarregandoVinculos] = useState(false);
+  const [vinculosCarregados, setVinculosCarregados] = useState(false);
+  const [salvandoVinculos, setSalvandoVinculos] = useState(false);
+  const [erroVinculos, setErroVinculos] = useState("");
 
   // Impede solicitações duplicadas antes da atualização do estado React.
-  const operacaoEmAndamento = useRef(false)
+  const operacaoEmAndamento = useRef(false);
+
+  // Identifica o carregamento mais recente dos vínculos.
+  const requisicaoVinculosAtual = useRef(0);
+
+  // Bloqueia solicitações simultâneas de salvamento dos vínculos.
+  const salvamentoVinculosEmAndamento = useRef(false);
 
   useEffect(() => {
-    if (!isAdmin) return
+    if (!isAdmin) return;
 
-    let ativo = true
+    let ativo = true;
 
     async function carregar() {
       try {
-        const lista = await usuarioService.listar()
+        const lista = await usuarioService.listar();
 
-        if (!ativo) return
+        if (!ativo) return;
 
-        setUsuarios(lista)
+        setUsuarios(lista);
       } catch (error) {
         if (ativo) {
           setErro(
             error instanceof ApiError
               ? error.message
-              : 'Não foi possível carregar os usuários.',
-          )
+              : "Não foi possível carregar os usuários.",
+          );
         }
       } finally {
         if (ativo) {
-          setCarregando(false)
+          setCarregando(false);
         }
       }
     }
 
-    void carregar()
+    void carregar();
 
     return () => {
-      ativo = false
+      ativo = false;
+    };
+  }, [isAdmin]);
+
+  async function abrirGerenciamentoPropriedades(tecnico: Usuario) {
+  if (
+    !isAdmin ||
+    tecnico.perfil !== "TECNICO" ||
+    processando ||
+    salvandoVinculos ||
+    carregandoVinculos ||
+    listaDesatualizada
+  ) {
+    return;
+  }
+
+  const requisicaoAtual = ++requisicaoVinculosAtual.current;
+
+    setTecnicoSelecionado(tecnico);
+    setPropriedadesDisponiveis([]);
+    setPropriedadesSelecionadas([]);
+    setErroVinculos("");
+    setVinculosCarregados(false);
+    setCarregandoVinculos(true);
+
+    try {
+      const [propriedades, vinculadas] = await Promise.all([
+        propriedadeService.listar(),
+        usuarioService.listarPropriedades(tecnico.id),
+      ]);
+
+      // Ignora respostas de carregamentos antigos.
+      if (requisicaoAtual !== requisicaoVinculosAtual.current) {
+        return;
+      }
+
+      setPropriedadesDisponiveis(propriedades);
+      setPropriedadesSelecionadas(
+        vinculadas.map((propriedade) => propriedade.id),
+      );
+      setVinculosCarregados(true);
+    } catch (error) {
+      if (requisicaoAtual !== requisicaoVinculosAtual.current) {
+        return;
+      }
+
+      setErroVinculos(
+        error instanceof ApiError
+          ? error.message
+          : "Não foi possível carregar as propriedades do Técnico.",
+      );
+    } finally {
+      if (requisicaoAtual === requisicaoVinculosAtual.current) {
+        setCarregandoVinculos(false);
+      }
     }
-  }, [isAdmin])
+  }
+
+  function alternarPropriedade(propriedadeId: number) {
+    if (carregandoVinculos || salvandoVinculos || erroVinculos) {
+      return;
+    }
+
+    setPropriedadesSelecionadas((selecionadas) =>
+      selecionadas.includes(propriedadeId)
+        ? selecionadas.filter((id) => id !== propriedadeId)
+        : [...selecionadas, propriedadeId],
+    );
+  }
+
+  function fecharGerenciamentoPropriedades() {
+  if (salvandoVinculos) {
+    return;
+  }
+
+  requisicaoVinculosAtual.current += 1;
+  setTecnicoSelecionado(null);
+  setCarregandoVinculos(false);
+  setVinculosCarregados(false);
+  }
+
+  async function salvarVinculos() {
+  if (
+    !isAdmin ||
+    !tecnicoSelecionado ||
+    tecnicoSelecionado.perfil !== "TECNICO" ||
+    !vinculosCarregados ||
+    carregandoVinculos ||
+    salvandoVinculos ||
+    salvamentoVinculosEmAndamento.current
+  ) {
+    return;
+  }
+
+  // Bloqueia imediatamente qualquer segunda tentativa de salvamento.
+  salvamentoVinculosEmAndamento.current = true;
+
+  const tecnico = tecnicoSelecionado;
+  const idsSelecionados = [...propriedadesSelecionadas];
+
+  setSalvandoVinculos(true);
+  setErroVinculos("");
+  setMensagemSucesso("");
+
+  try {
+    await usuarioService.vincularPropriedades(
+      tecnico.id,
+      idsSelecionados,
+    );
+
+    setMensagemSucesso(
+      `Propriedades do Técnico "${tecnico.nome}" atualizadas com sucesso.`,
+    );
+
+    // Invalida eventuais carregamentos pendentes.
+    requisicaoVinculosAtual.current += 1;
+
+    setTecnicoSelecionado(null);
+    setCarregandoVinculos(false);
+    setVinculosCarregados(false);
+  } catch (error) {
+    setErroVinculos(
+      error instanceof ApiError
+        ? error.message
+        : "Não foi possível salvar os vínculos. Tente novamente.",
+    );
+  } finally {
+    salvamentoVinculosEmAndamento.current = false;
+    setSalvandoVinculos(false);
+  }
+}
 
   function solicitarAlteracaoStatus(u: Usuario) {
-    if (
-      !isAdmin ||
-      operacaoEmAndamento.current ||
-      listaDesatualizada
-    ) {
-      return
+    if (!isAdmin || operacaoEmAndamento.current || listaDesatualizada) {
+      return;
     }
 
     // O administrador não pode inativar a própria conta.
-    if (u.id === usuario?.id && u.status === 'ATIVO') {
-      setErroAcao('Você não pode inativar a sua própria conta.')
-      return
+    if (u.id === usuario?.id && u.status === "ATIVO") {
+      setErroAcao("Você não pode inativar a sua própria conta.");
+      return;
     }
 
-    setMensagemSucesso('')
-    setErroAcao('')
-    setAcaoPendente(u)
+    setMensagemSucesso("");
+    setErroAcao("");
+    setAcaoPendente(u);
   }
 
   async function confirmarAlteracaoStatus() {
@@ -91,75 +238,71 @@ export default function Usuarios() {
       operacaoEmAndamento.current ||
       listaDesatualizada
     ) {
-      return
+      return;
     }
 
-    const alvo = acaoPendente
-    const inativando = alvo.status === 'ATIVO'
+    const alvo = acaoPendente;
+    const inativando = alvo.status === "ATIVO";
 
     // Proteção adicional contra autoinativação.
     if (inativando && alvo.id === usuario?.id) {
-      setErroAcao('Você não pode inativar a sua própria conta.')
-      setAcaoPendente(null)
-      return
+      setErroAcao("Você não pode inativar a sua própria conta.");
+      setAcaoPendente(null);
+      return;
     }
 
-    operacaoEmAndamento.current = true
-    setProcessando(true)
-    setMensagemSucesso('')
-    setErroAcao('')
+    operacaoEmAndamento.current = true;
+    setProcessando(true);
+    setMensagemSucesso("");
+    setErroAcao("");
 
     try {
       if (inativando) {
-        await usuarioService.inativar(alvo.id)
+        await usuarioService.inativar(alvo.id);
       } else {
-        await usuarioService.reativar(alvo.id)
+        await usuarioService.reativar(alvo.id);
       }
 
-      const novoStatus: Usuario['status'] = inativando
-        ? 'INATIVO'
-        : 'ATIVO'
+      const novoStatus: Usuario["status"] = inativando ? "INATIVO" : "ATIVO";
 
       // Atualiza imediatamente o usuário alterado na listagem.
       setUsuarios((listaAtual) =>
         listaAtual.map((u) =>
-          u.id === alvo.id
-            ? { ...u, status: novoStatus }
-            : u,
+          u.id === alvo.id ? { ...u, status: novoStatus } : u,
         ),
-      )
+      );
 
-      setAcaoPendente(null)
+      setAcaoPendente(null);
 
       setMensagemSucesso(
         `Usuário "${alvo.nome}" ${
-          inativando ? 'inativado' : 'reativado'
+          inativando ? "inativado" : "reativado"
         } com sucesso.`,
-      )
+      );
 
       // Sincroniza novamente com a fonte oficial: o backend.
       try {
-        const listaAtualizada = await usuarioService.listar()
-        setUsuarios(listaAtualizada)
+        const listaAtualizada = await usuarioService.listar();
+        setUsuarios(listaAtualizada);
       } catch {
         // Preserva o novo status local e bloqueia novas ações
         // até que a página seja recarregada com dados atualizados.
-        setListaDesatualizada(true)
+        setListaDesatualizada(true);
         setErroAcao(
-          'O status foi alterado com sucesso, mas não foi possível sincronizar a listagem. Recarregue a página antes de realizar outra ação.',
-        )
+          "O status foi alterado com sucesso, mas não foi possível sincronizar a listagem. Recarregue a página antes de realizar outra ação.",
+        );
       }
     } catch (error) {
       setErroAcao(
         error instanceof ApiError
           ? error.message
-          : 'Não foi possível alterar o status do usuário.',
-      )
+          : "Não foi possível alterar o status do usuário.",
+      );
 
-      setAcaoPendente(null)
+      setAcaoPendente(null);
     } finally {
-      operacaoEmAndamento.current = false
-      setProcessando(false)
+      operacaoEmAndamento.current = false;
+      setProcessando(false);
     }
   }
 
@@ -172,7 +315,7 @@ export default function Usuarios() {
           </FeedbackMessage>
         </div>
       </AppShell>
-    )
+    );
   }
 
   return (
@@ -187,7 +330,8 @@ export default function Usuarios() {
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[#68756d]">
-                Cadastre e gerencie os acessos de administradores, produtores e técnicos.
+                Cadastre e gerencie os acessos de administradores, produtores e
+                técnicos.
               </p>
             </div>
 
@@ -210,10 +354,10 @@ export default function Usuarios() {
 
             {!carregando && !erro ? (
               <p className="mt-1 text-sm text-[#718078]">
-                {usuarios.length}{' '}
+                {usuarios.length}{" "}
                 {usuarios.length === 1
-                  ? 'usuário cadastrado'
-                  : 'usuários cadastrados'}
+                  ? "usuário cadastrado"
+                  : "usuários cadastrados"}
               </p>
             ) : null}
           </div>
@@ -229,9 +373,7 @@ export default function Usuarios() {
 
           {erroAcao && (
             <div className="mt-5">
-              <FeedbackMessage variant="error">
-                {erroAcao}
-              </FeedbackMessage>
+              <FeedbackMessage variant="error">{erroAcao}</FeedbackMessage>
             </div>
           )}
 
@@ -242,9 +384,7 @@ export default function Usuarios() {
             </p>
           ) : erro ? (
             <div className="mt-5">
-              <FeedbackMessage variant="error">
-                {erro}
-              </FeedbackMessage>
+              <FeedbackMessage variant="error">{erro}</FeedbackMessage>
             </div>
           ) : usuarios.length === 0 ? (
             <p className="mt-5 text-sm text-[#68756d]">
@@ -254,12 +394,10 @@ export default function Usuarios() {
             <div className="mt-5 space-y-3">
               {usuarios.map((u) => {
                 const podeInativarPropriaConta =
-                  u.id === usuario?.id && u.status === 'ATIVO'
+                  u.id === usuario?.id && u.status === "ATIVO";
 
                 const botaoDesabilitado =
-                  processando ||
-                  listaDesatualizada ||
-                  podeInativarPropriaConta
+                  processando || listaDesatualizada || podeInativarPropriaConta;
 
                 return (
                   <article
@@ -289,9 +427,9 @@ export default function Usuarios() {
 
                             <span
                               className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                                u.status === 'ATIVO'
-                                  ? 'bg-emerald-50 text-emerald-700'
-                                  : 'bg-red-50 text-red-700'
+                                u.status === "ATIVO"
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-red-50 text-red-700"
                               }`}
                             >
                               {u.status}
@@ -311,27 +449,42 @@ export default function Usuarios() {
                           Editar
                         </Link>
 
+                        {/* Gerenciar propriedades vinculadas ao Técnico */}
+                        {u.perfil === "TECNICO" && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="lg"
+                            className="gap-2"
+                            disabled={processando || listaDesatualizada}
+                            onClick={() =>
+                              void abrirGerenciamentoPropriedades(u)
+                            }
+                          >
+                            <MapPin size={16} aria-hidden="true" />
+                            Gerenciar propriedades
+                          </Button>
+                        )}
+
                         {/* Inativar ou reativar */}
                         <Button
                           type="button"
                           variant={
-                            u.status === 'ATIVO'
-                              ? 'destructive'
-                              : 'outline'
+                            u.status === "ATIVO" ? "destructive" : "outline"
                           }
                           size="lg"
                           className="min-w-28"
                           disabled={botaoDesabilitado}
                           title={
                             podeInativarPropriaConta
-                              ? 'Você não pode inativar sua própria conta'
+                              ? "Você não pode inativar sua própria conta"
                               : listaDesatualizada
-                                ? 'Recarregue a página para atualizar a lista'
+                                ? "Recarregue a página para atualizar a lista"
                                 : undefined
                           }
                           onClick={() => solicitarAlteracaoStatus(u)}
                         >
-                          {u.status === 'ATIVO' ? (
+                          {u.status === "ATIVO" ? (
                             <>
                               <UserX size={16} aria-hidden="true" />
                               Inativar
@@ -346,7 +499,7 @@ export default function Usuarios() {
                       </div>
                     </div>
                   </article>
-                )
+                );
               })}
             </div>
           )}
@@ -358,34 +511,26 @@ export default function Usuarios() {
         open={acaoPendente !== null}
         onOpenChange={(aberto) => {
           if (!aberto && !operacaoEmAndamento.current) {
-            setAcaoPendente(null)
+            setAcaoPendente(null);
           }
         }}
       >
         <AlertDialog.Portal>
-          <AlertDialog.Backdrop
-            className="fixed inset-0 z-50 bg-black/50"
-          />
+          <AlertDialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
 
-          <AlertDialog.Popup
-            className="fixed left-1/2 top-1/2 z-[51] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[#e1e7e3] bg-white p-6 shadow-2xl"
-          >
+          <AlertDialog.Popup className="fixed left-1/2 top-1/2 z-[51] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[#e1e7e3] bg-white p-6 shadow-2xl">
             <AlertDialog.Title className="text-xl font-semibold text-[#18251e]">
-              Confirmar{' '}
-              {acaoPendente?.status === 'ATIVO'
-                ? 'inativação'
-                : 'reativação'}
+              Confirmar{" "}
+              {acaoPendente?.status === "ATIVO" ? "inativação" : "reativação"}
             </AlertDialog.Title>
 
             <AlertDialog.Description className="mt-3 text-sm leading-6 text-[#68756d]">
-              Deseja realmente{' '}
-              {acaoPendente?.status === 'ATIVO'
-                ? 'inativar'
-                : 'reativar'}{' '}
-              o usuário "{acaoPendente?.nome}"?
-              {acaoPendente?.status === 'ATIVO'
-                ? ' O acesso à plataforma será bloqueado até a reativação.'
-                : ' O usuário poderá acessar novamente a plataforma com suas credenciais.'}
+              Deseja realmente{" "}
+              {acaoPendente?.status === "ATIVO" ? "inativar" : "reativar"} o
+              usuário "{acaoPendente?.nome}"?
+              {acaoPendente?.status === "ATIVO"
+                ? " O acesso à plataforma será bloqueado até a reativação."
+                : " O usuário poderá acessar novamente a plataforma com suas credenciais."}
             </AlertDialog.Description>
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -402,20 +547,123 @@ export default function Usuarios() {
               <Button
                 type="button"
                 variant={
-                  acaoPendente?.status === 'ATIVO'
-                    ? 'destructive'
-                    : 'default'
+                  acaoPendente?.status === "ATIVO" ? "destructive" : "default"
                 }
                 size="lg"
                 disabled={processando || !acaoPendente}
                 onClick={() => void confirmarAlteracaoStatus()}
               >
-                {processando ? 'Processando...' : 'Confirmar'}
+                {processando ? "Processando..." : "Confirmar"}
               </Button>
             </div>
           </AlertDialog.Popup>
         </AlertDialog.Portal>
       </AlertDialog.Root>
+      {/* Modal de gerenciamento de propriedades */}
+      <Dialog.Root
+  open={tecnicoSelecionado !== null}
+  onOpenChange={(aberto) => {
+  if (!aberto) {
+    fecharGerenciamentoPropriedades();
+  }
+}}
+>
+        <Dialog.Portal>
+          <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
+
+          <Dialog.Popup className="fixed left-1/2 top-1/2 z-[51] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[#e1e7e3] bg-white p-6 shadow-2xl">
+            <Dialog.Title className="text-xl font-semibold text-[#18251e]">
+              Gerenciar propriedades
+            </Dialog.Title>
+
+            <Dialog.Description className="mt-2 text-sm text-[#68756d]">
+              Selecione as propriedades que ficarão vinculadas ao Técnico{" "}
+              <strong>{tecnicoSelecionado?.nome}</strong>.
+            </Dialog.Description>
+
+            <div className="mt-6">
+              {carregandoVinculos ? (
+                <p className="text-sm text-[#68756d]">
+                  Carregando propriedades e vínculos...
+                </p>
+              ) : erroVinculos ? (
+                <FeedbackMessage variant="error">
+                  {erroVinculos}
+                </FeedbackMessage>
+              ) : vinculosCarregados ? (
+                propriedadesDisponiveis.length === 0 ? (
+                  <p className="text-sm text-[#68756d]">
+                    Nenhuma propriedade disponível.
+                  </p>
+                ) : (
+                  <div className="max-h-72 space-y-2 overflow-y-auto">
+                    {propriedadesDisponiveis.map((propriedade) => (
+                      <label
+                        key={propriedade.id}
+                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#dfe6e1] p-4 transition hover:bg-[#f0faf4]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={propriedadesSelecionadas.includes(
+                            propriedade.id,
+                          )}
+                          onChange={() => alternarPropriedade(propriedade.id)}
+                          disabled={salvandoVinculos}
+                          className="h-4 w-4 accent-[#009B4D]"
+                        />
+
+                        <span className="min-w-0">
+                          <span className="block font-semibold text-[#202d25]">
+                            {propriedade.nome}
+                          </span>
+
+                          <span className="block text-sm text-[#68756d]">
+                            {propriedade.cidade} - {propriedade.uf}
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )
+              ) : null}
+            </div>
+
+            {vinculosCarregados && !erroVinculos && (
+              <p className="mt-4 text-sm text-[#68756d]">
+                {propriedadesSelecionadas.length}{" "}
+                {propriedadesSelecionadas.length === 1
+                  ? "propriedade selecionada"
+                  : "propriedades selecionadas"}
+              </p>
+            )}
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                disabled={salvandoVinculos}
+                onClick={fecharGerenciamentoPropriedades}
+              >
+                Cancelar
+              </Button>
+
+              <Button
+                type="button"
+                size="lg"
+                disabled={
+  carregandoVinculos ||
+  salvandoVinculos ||
+  !vinculosCarregados
+}
+                onClick={() => void salvarVinculos()}
+              >
+                {salvandoVinculos ? "Salvando..." : "Salvar vínculos"}
+              </Button>
+            </div>
+          </Dialog.Popup>
+        </Dialog.Portal>
+      </Dialog.Root>
     </AppShell>
-  )
+  );
 }
