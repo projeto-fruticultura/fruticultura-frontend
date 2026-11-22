@@ -11,6 +11,7 @@ import {
   ChartNoAxesCombined,
   MapPinned,
   Users,
+  Truck,
   Settings
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
@@ -95,7 +96,15 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
               key: "iot" as const,
             },
           ]
-        : baseNavItems;
+        : [
+            ...baseNavItems,
+            {
+              label: "Logística",
+              to: "/logistica",
+              icon: Truck,
+              key: "logistica" as const,
+            },
+          ];
 
   const sidebarContent = (
     <>
@@ -155,7 +164,7 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
               Em breve
             </span>
           </div>
-        </div> : null
+        </div> 
       </nav>
 
       <div className="border-t border-white/10 p-3">
