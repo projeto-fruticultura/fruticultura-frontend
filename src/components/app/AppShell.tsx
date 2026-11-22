@@ -12,44 +12,68 @@ import {
   MapPinned,
   Users,
   Truck,
-  Settings
-} from 'lucide-react'
-import { useState, type ReactNode } from 'react'
-import { Link, NavLink } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
-import { PwaInstallButton } from '@/components/ui/PwaInstallButton'
+  Settings,
+} from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { PwaInstallButton } from "@/components/ui/PwaInstallButton";
+import { ClimaValeTicker } from "./ClimaValeTicker";
 
 interface AppShellProps {
-  children: ReactNode
-  section?: 'overview' | 'properties' | 'culturas' | 'sensores' | 'lotes' | 'usuarios' | 'logistica' | 'mercado'
+  children: ReactNode;
+  section?:
+    | "overview"
+    | "properties"
+    | "culturas"
+    | "sensores"
+    | "lotes"
+    | "usuarios"
+    | "logistica"
+    | "mercado";
 }
 
 const baseNavItems = [
-  { label: 'Visão geral', to: '/painel', icon: LayoutDashboard, key: 'overview' as const },
-  { label: 'Propriedades', to: '/propriedades', icon: Leaf, key: 'properties' as const },
-  { label: 'Culturas', to: '/culturas', icon: Sprout, key: 'culturas' as const },
-  { label: 'Lotes', to: '/lotes', icon: MapPinned, key: 'lotes' as const },
-  { label: 'Sensores', to: '/sensores', icon: Cpu, key: 'sensores' as const },
-]
+  {
+    label: "Visão geral",
+    to: "/painel",
+    icon: LayoutDashboard,
+    key: "overview" as const,
+  },
+  {
+    label: "Propriedades",
+    to: "/propriedades",
+    icon: Leaf,
+    key: "properties" as const,
+  },
+  {
+    label: "Culturas",
+    to: "/culturas",
+    icon: Sprout,
+    key: "culturas" as const,
+  },
+  { label: "Lotes", to: "/lotes", icon: MapPinned, key: "lotes" as const },
+  { label: "Sensores", to: "/sensores", icon: Cpu, key: "sensores" as const },
+];
 
 function formatCurrentDate() {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: 'short',
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
   })
     .format(new Date())
-    .replace('.', '')
-    .toUpperCase()
+    .replace(".", "")
+    .toUpperCase();
 }
 
 function getInitials(name?: string) {
-  if (!name) return 'VS'
+  if (!name) return "VS";
   return name
-    .split(' ')
+    .split(" ")
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
-    .join('')
+    .join("");
 }
 
 export function AppShell({ children, section = "properties" }: AppShellProps) {
@@ -164,7 +188,7 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
               Em breve
             </span>
           </div>
-        </div> 
+        </div>
       </nav>
 
       <div className="border-t border-white/10 p-3">
@@ -208,23 +232,31 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
       <div className="min-w-0">
         <header className="sticky top-0 z-40 border-b border-[#e1e7e3] bg-white/95 backdrop-blur-md">
           <div className="flex min-h-[68px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 xl:px-10">
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-4">
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#dce5df] text-[#32443a] transition hover:bg-[#f3f7f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D] lg:hidden"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#dce5df] text-[#32443a] transition hover:bg-[#f3f7f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D] lg:hidden"
                 aria-label="Abrir menu"
               >
                 <Menu size={20} />
               </button>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#819087]">
+
+              <div className="hidden shrink-0 sm:block">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#819087]">
                   Hoje
                 </p>
                 <p className="mt-0.5 text-sm font-semibold text-[#33433b]">
                   {formatCurrentDate()}
                 </p>
               </div>
+
+              <div
+                className="hidden h-8 w-px shrink-0 bg-[#e1e7e3] sm:block"
+                aria-hidden="true"
+              />
+
+              <ClimaValeTicker />
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -266,23 +298,35 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
   );
 }
 
-export function PageBreadcrumb({ items }: { items: Array<{ label: string; to?: string }> }) {
+export function PageBreadcrumb({
+  items,
+}: {
+  items: Array<{ label: string; to?: string }>;
+}) {
   return (
     <nav aria-label="Breadcrumb" className="mb-5">
       <ol className="flex flex-wrap items-center gap-1.5 text-sm text-[#75827a]">
         {items.map((item, index) => (
-          <li key={`${item.label}-${index}`} className="flex items-center gap-1.5">
+          <li
+            key={`${item.label}-${index}`}
+            className="flex items-center gap-1.5"
+          >
             {index > 0 ? <ChevronRight size={14} aria-hidden="true" /> : null}
             {item.to ? (
-              <Link to={item.to} className="font-medium transition hover:text-[#15693E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]">
+              <Link
+                to={item.to}
+                className="font-medium transition hover:text-[#15693E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
+              >
                 {item.label}
               </Link>
             ) : (
-              <span aria-current="page" className="font-medium text-[#3e4c44]">{item.label}</span>
+              <span aria-current="page" className="font-medium text-[#3e4c44]">
+                {item.label}
+              </span>
             )}
           </li>
         ))}
       </ol>
     </nav>
-  )
+  );
 }
