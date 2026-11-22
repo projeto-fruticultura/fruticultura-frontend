@@ -158,7 +158,7 @@ export function ClimaValeTicker() {
         onMouseLeave={() => setPausado(false)}
         title="Clima no Vale do São Francisco (clique para alternar cidade)"
         aria-label={`Clima em ${cidade.nome}-${cidade.uf}: ${cidade.temperatura}°C, umidade ${cidade.umidade}%, ${texto}. Clique para próxima cidade.`}
-        className="group relative hidden flex-col justify-center rounded-lg px-2 py-1 text-left transition-colors hover:bg-[#f4f7f5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D] md:inline-flex"
+        className="group relative hidden flex-col justify-center rounded-xl border border-[#e2eae5] bg-[#f4f8f5] px-3 py-1.5 text-left transition-colors hover:border-[#c9d8ce] hover:bg-[#ecf3ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D] md:inline-flex"
       >
         <div
           key={`${cidade.nome}-${cicloKey}`}
@@ -193,7 +193,7 @@ export function ClimaValeTicker() {
         {dadosClima.length > 1 && (
           <span
             aria-hidden="true"
-            className="mt-1.5 block h-[1.5px] w-full overflow-hidden rounded-full bg-[#e8eeea]"
+            className="mt-1.5 block h-[1.5px] w-full overflow-hidden rounded-full bg-[#dfe8e2]"
           >
             <span
               key={`line-${cicloKey}`}
