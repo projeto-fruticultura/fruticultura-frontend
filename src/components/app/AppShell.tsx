@@ -8,7 +8,6 @@ import {
   Menu,
   Sprout,
   X,
-  ChartNoAxesCombined,
   MapPinned,
   Users,
   Truck,
