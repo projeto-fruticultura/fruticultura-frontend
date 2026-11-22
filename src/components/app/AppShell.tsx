@@ -176,19 +176,6 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
             <span>{label}</span>
           </NavLink>
         ))}
-
-        <div className="mt-4 border-t border-white/10 pt-4">
-          <div
-            className="flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-white/45"
-            aria-disabled="true"
-          >
-            <ChartNoAxesCombined size={18} aria-hidden="true" />
-            <span className="flex-1">Dados de Mercado</span>
-            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-              Em breve
-            </span>
-          </div>
-        </div>
       </nav>
 
       <div className="border-t border-white/10 p-3">
