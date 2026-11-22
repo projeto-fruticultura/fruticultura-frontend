@@ -1,4 +1,4 @@
-import { ArrowLeft, Leaf } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { AppShell, PageBreadcrumb } from '@/components/app/AppShell'
@@ -26,13 +26,9 @@ export default function NovaPropriedade() {
           Voltar para propriedades
         </Link>
 
-        {/* Cabeçalho padronizado */}
         <section className="mb-6 overflow-hidden rounded-[24px] border border-[#e1e7e3] bg-white shadow-sm">
           <div className="border-l-[7px] border-[#009B4D] px-5 py-6 sm:px-7">
             <div className="flex items-start gap-4">
-              <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#edf7f1] text-[#15693E] sm:flex">
-                <Leaf size={22} aria-hidden="true" />
-              </span>
 
               <div>
                 <h1 className="text-[clamp(2rem,3vw,2.75rem)] font-semibold tracking-[-0.04em] text-[#18251e]">
@@ -40,34 +36,19 @@ export default function NovaPropriedade() {
                 </h1>
 
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#68756d]">
-                  Cadastre uma nova unidade produtiva ou fazenda no Vale do São
-                  Francisco para iniciar o monitoramento de lotes e sensores.
+                  Cadastre uma unidade produtiva para organizar lotes,
+                  monitorar condições climáticas e apoiar decisões de colheita e
+                  exportação.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Container do formulário */}
         <section
           aria-label="Formulário de cadastro de propriedade"
           className="rounded-[24px] border border-[#e1e7e3] bg-white p-5 shadow-sm sm:p-7 lg:p-8"
         >
-          <div className="mb-6 flex flex-col gap-1 border-b border-[#edf1ee] pb-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#1c2922]">
-                Dados da unidade produtiva
-              </h2>
-              <p className="mt-0.5 text-xs text-[#718078]">
-                Informe identificação, localização geográfica e área total da
-                propriedade.
-              </p>
-            </div>
-            <span className="inline-flex w-fit items-center rounded-full bg-[#f3f6f4] px-3 py-1 text-[11px] font-semibold text-[#526058]">
-              Cadastro inicial
-            </span>
-          </div>
-
           <PropertyForm
             submitLabel="Cadastrar propriedade"
             onSubmit={async (payload) => {
