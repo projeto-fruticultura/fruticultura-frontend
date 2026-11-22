@@ -1,4 +1,14 @@
-import type { PrecoRegistro, PrecoResposta } from '@/types/api'
+import type { PrecoRegistro, PrecoResposta, ProdutoMercado } from '@/types/api'
+
+export const LIMITE_COTACOES = 20
+export const PRODUTOS_MERCADO: Array<{ valor: ProdutoMercado; texto: string }> = [
+  { valor: 'UVA', texto: 'Uva' }, { valor: 'MANGA', texto: 'Manga' }, { valor: 'BANANA', texto: 'Banana' },
+  { valor: 'GOIABA', texto: 'Goiaba' }, { valor: 'MELAO', texto: 'Melão' },
+]
+
+export function nomeSerie(registro: PrecoRegistro) {
+  return `${registro.ceasa} · ${registro.variedade || 'Variedade não informada'} · ${registro.unidade}`
+}
 
 function chaveSerie(registro: PrecoRegistro) {
   return [registro.produto, registro.variedade ?? '', registro.uf, registro.ceasa, registro.unidade].join('||')

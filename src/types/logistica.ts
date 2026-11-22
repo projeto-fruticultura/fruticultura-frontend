@@ -24,8 +24,27 @@ export interface LogisticaPayload {
   origem: string
   destino: string
   modal: ModalLogistica
-  transportadora: string | null
+  transportadora: string
   custo: number
   situacao: SituacaoLogistica
-  tempoEstimadoHoras: number | null
+  tempoEstimadoHoras: number
+  exigeRefrigeracaoRapida: boolean | null
+  colhidoEm: string | null
+  resfriadoEm: string | null
+  temperaturaResfriamentoC: number | null
+}
+
+export interface FiltrosLogistica {
+  propriedadeId?: number
+  modal?: ModalLogistica
+  situacao?: SituacaoLogistica
+  pagina?: number
+  limite?: number
+}
+
+export interface PaginacaoLogistica {
+  pagina: number
+  limite: number
+  total: number
+  totalPaginas: number
 }

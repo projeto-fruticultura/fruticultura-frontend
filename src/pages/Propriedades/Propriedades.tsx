@@ -241,6 +241,9 @@ export default function Propriedades() {
                       <h3 className="truncate text-base font-semibold text-[#202d25] sm:text-lg">
                         {item.nome}
                       </h3>
+                      {item.coordenadasEstimadasUf === true ? (
+                        <p className="mt-1 text-xs font-medium text-amber-800">Coordenadas estimadas por região</p>
+                      ) : null}
                       <p className="mt-1 flex items-center gap-1.5 text-sm text-[#66746c]">
                         <MapPin size={15} aria-hidden="true" /> {item.cidade} -{" "}
                         {item.uf}

@@ -6,16 +6,12 @@ import { CabecalhoProdutor, Campo, EstadoVazio, botaoSecundario, campo, cartao }
 import { FeedbackMessage } from '@/components/ui/FeedbackMessage'
 import { formatarData, formatarDataHora, formatarMoeda, formatarNumero } from '@/lib/formatar'
 import { mediaComparavel } from '@/lib/indicadoresProdutor'
-import { serieComparavel } from '@/lib/seriesMercado'
+import { LIMITE_COTACOES, PRODUTOS_MERCADO, nomeSerie, serieComparavel } from '@/lib/seriesMercado'
 import { UFS } from '@/lib/ufs'
 import { ApiError } from '@/services/api'
 import { precoService } from '@/services/precoService'
 import type { PrecoResposta, ProdutoMercado } from '@/types/api'
 
-const PRODUTOS: Array<{ valor: ProdutoMercado; texto: string }> = [
-  { valor: 'UVA', texto: 'Uva' }, { valor: 'MANGA', texto: 'Manga' }, { valor: 'BANANA', texto: 'Banana' },
-  { valor: 'GOIABA', texto: 'Goiaba' }, { valor: 'MELAO', texto: 'Melão' },
-]
 const PERIODOS = [7, 30, 90] as const
 
 export default function Mercado() {
@@ -36,7 +32,7 @@ export default function Mercado() {
     setErro('')
     setDados(null)
     setSerie('')
-    void precoService.consultar(produto, uf, 20)
+    void precoService.consultar(produto, uf, LIMITE_COTACOES)
       .then((resposta) => { if (pedido.current === atual) setDados(resposta) })
       .catch((error: unknown) => {
         if (pedido.current !== atual) return
@@ -62,22 +58,25 @@ export default function Mercado() {
       <section className={cartao} aria-labelledby="filtros-mercado">
         <h2 id="filtros-mercado" className="mb-4 text-base font-semibold text-[#1d2b23]">Consultar cotações</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <Campo rotulo="Produto"><select className={campo} value={produto} onChange={(e) => setProduto(e.target.value as ProdutoMercado)}>{PRODUTOS.map((p) => <option value={p.valor} key={p.valor}>{p.texto}</option>)}</select></Campo>
+          <Campo rotulo="Produto"><select className={campo} value={produto} onChange={(e) => setProduto(e.target.value as ProdutoMercado)}>{PRODUTOS_MERCADO.map((p) => <option value={p.valor} key={p.valor}>{p.texto}</option>)}</select></Campo>
           <Campo rotulo="UF"><select className={campo} value={uf} onChange={(e) => setUf(e.target.value)}>{UFS.map((sigla) => <option key={sigla} value={sigla}>{sigla}</option>)}</select></Campo>
           <Campo rotulo="Histórico"><select className={campo} value={periodo} onChange={(e) => { setPeriodo(Number(e.target.value) as (typeof PERIODOS)[number]); setSerie('') }}>
             {PERIODOS.map((dias) => <option key={dias} value={dias}>Últimos {dias} dias</option>)}</select></Campo>
           <Campo rotulo="Série / CEASA"><select className={campo} value={grupo?.chave ?? ''} disabled={series.length === 0} onChange={(e) => setSerie(e.target.value)}>
             {series.length === 0 ? <option value="">Nenhuma série encontrada</option> : series.map((s) => {
               const referencia = s.registros[s.registros.length - 1]
-              return <option value={s.chave} key={s.chave}>{referencia.ceasa} · {referencia.variedade || 'Variedade não informada'} · {referencia.unidade}</option>
+              return <option value={s.chave} key={s.chave}>{nomeSerie(referencia)}</option>
             })}</select></Campo>
         </div>
+        <p className="mt-3 text-xs text-[#526158]">
+          A consulta solicita até {LIMITE_COTACOES} cotações recentes por produto e UF. A média usa as cotações disponíveis da série no intervalo selecionado.
+        </p>
       </section>
       {carregando ? <div role="status" className="mt-4">Consultando dados de mercado...</div> : erro ? <div className="mt-4"><FeedbackMessage variant="error">{erro}</FeedbackMessage></div> : !dados || !ultima || !grupo ? <div className="mt-4"><EstadoVazio>Sem cotação no período selecionado. Tente outro produto, UF ou intervalo.</EstadoVazio></div> : <>
         {dados.desatualizado ? <div className="mt-4"><FeedbackMessage variant="info">As cotações exibidas são dados em cache e podem estar desatualizadas.</FeedbackMessage></div> : null}
         <section className="mt-4 grid gap-3 md:grid-cols-3" aria-label="Indicadores de mercado">
           <article className={cartao}><p className="text-xs font-semibold text-[#6f7c74]">Preço mais recente</p><p className="mt-2 text-2xl font-semibold text-[#145a37]">{formatarMoeda(ultima.preco)}</p><p className="mt-1 text-xs text-[#6f7c74]">por {ultima.unidade} · {formatarData(ultima.data)}</p></article>
-          <article className={cartao}><p className="text-xs font-semibold text-[#6f7c74]">Média do período</p><p className="mt-2 text-2xl font-semibold text-[#1b2821]">{media === null || grupo.registros.length < 2 ? '—' : formatarMoeda(media)}</p><p className="mt-1 text-xs text-[#6f7c74]">{grupo.registros.length} registro(s) da mesma série</p></article>
+          <article className={cartao}><p className="text-xs font-semibold text-[#6f7c74]">Média das cotações disponíveis</p><p className="mt-2 text-2xl font-semibold text-[#1b2821]">{media === null || grupo.registros.length < 2 ? '—' : formatarMoeda(media)}</p><p className="mt-1 text-xs text-[#6f7c74]">{grupo.registros.length} registro(s) da mesma série</p></article>
           <article className={cartao}><p className="flex items-center gap-2 text-xs font-semibold text-[#6f7c74]"><TrendingUp size={16} aria-hidden="true"/> Variação vs. média</p>
             <p className={`mt-2 text-2xl font-semibold ${variacao !== null && variacao < 0 ? 'text-red-700' : 'text-[#145a37]'}`}>{variacao === null ? '—' : `${variacao >= 0 ? '+' : ''}${formatarNumero(variacao, 2)}%`}</p>
             <p className="mt-1 text-xs text-[#6f7c74]">{variacao === null ? 'Histórico comparável insuficiente.' : 'Mesmo produto, variedade, CEASA, UF e unidade.'}</p>

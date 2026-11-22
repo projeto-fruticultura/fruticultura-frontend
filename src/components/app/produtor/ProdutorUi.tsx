@@ -23,8 +23,13 @@ export function IndicadorProdutor({ nome, valor, ajuda, icone: Icon }: { nome: s
   </article>
 }
 
-export function Campo({ rotulo, children }: { rotulo: string; children: ReactNode }) {
-  return <label className="block text-sm font-semibold text-[#526158]">{rotulo}<span className="mt-1.5 block">{children}</span></label>
+export function Campo({ rotulo, children, erro, erroId }: { rotulo: string; children: ReactNode; erro?: string; erroId?: string }) {
+  return <div>
+    <label className="block text-sm font-semibold text-[#526158]">
+      {rotulo}<span className="mt-1.5 block">{children}</span>
+    </label>
+    {erro ? <p id={erroId} className="mt-1 text-xs font-medium text-red-700">{erro}</p> : null}
+  </div>
 }
 
 export function EstadoVazio({ children }: { children: ReactNode }) {

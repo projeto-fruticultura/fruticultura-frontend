@@ -4,12 +4,14 @@ import { AlertTriangle, CalendarDays, Cpu, Leaf, MapPinned, RefreshCw, ShieldAle
 import { AppShell, PageBreadcrumb } from '@/components/app/AppShell'
 import { AlertasPainel, type EstadoAlertas } from '@/components/app/dashboard/AlertasPainel'
 import { CabecalhoProdutor, EstadoVazio, IndicadorProdutor, botaoSecundario, cartao } from '@/components/app/produtor/ProdutorUi'
+import { VariacaoMercado } from '@/components/app/produtor/VariacaoMercado'
+import { JanelasProdutor } from '@/components/app/produtor/JanelasProdutor'
 import { FeedbackMessage } from '@/components/ui/FeedbackMessage'
 import { useAuth } from '@/context/AuthContext'
-import { formatarData, formatarDataHora } from '@/lib/formatar'
+import { formatarData, formatarDataHora, formatarNumero } from '@/lib/formatar'
 import { alertasObservadosHoje, condicaoPropriedade, leituraAntiga, type CondicaoPropriedade } from '@/lib/indicadoresProdutor'
 import { alertaService } from '@/services/alertaService'
-import { dashboardService, type DashboardResumo } from '@/services/dashboardService'
+import { dashboardService, type AlertasDoDiaProdutor, type AreasProdutor, type DashboardResumo } from '@/services/dashboardService'
 import { leituraService } from '@/services/leituraService'
 import { loteService } from '@/services/loteService'
 import { propriedadeService } from '@/services/propriedadeService'
@@ -22,11 +24,10 @@ interface DadosPainel {
   sensores: Sensor[]
   leituras: Leitura[] | null
   alertas: Alerta[] | null
-  resumo: DashboardResumo | null
   avisos: string[]
 }
 
-const estadoInicial: DadosPainel = { propriedades: [], lotes: [], sensores: [], leituras: null, alertas: null, resumo: null, avisos: [] }
+const estadoInicial: DadosPainel = { propriedades: [], lotes: [], sensores: [], leituras: null, alertas: null, avisos: [] }
 
 const ESTADOS: Record<CondicaoPropriedade, { nome: string; classe: string }> = {
   ALERTA: { nome: 'Atenção', classe: 'bg-amber-100 text-amber-900' },
@@ -53,24 +54,21 @@ export default function PainelProdutor() {
         sensorService.listar(),
         leituraService.listar({ limite: 100 }),
         alertaService.listar(),
-        dashboardService.resumo(),
       ] as const)
       if (!ativo) return
       const avisos: string[] = []
-      const [propriedades, lotes, sensores, leituras, alertas, resumo] = respostas
+      const [propriedades, lotes, sensores, leituras, alertas] = respostas
       if (propriedades.status === 'rejected') avisos.push('Não foi possível carregar as propriedades.')
       if (lotes.status === 'rejected') avisos.push('Não foi possível carregar os lotes.')
       if (sensores.status === 'rejected') avisos.push('Não foi possível carregar os sensores.')
       if (leituras.status === 'rejected') avisos.push('Não foi possível carregar as leituras.')
       if (alertas.status === 'rejected') avisos.push('Os alertas estão temporariamente indisponíveis.')
-      if (resumo.status === 'rejected') avisos.push('Os indicadores agregados estão temporariamente indisponíveis.')
       setDados({
         propriedades: propriedades.status === 'fulfilled' ? propriedades.value : [],
         lotes: lotes.status === 'fulfilled' ? lotes.value : [],
         sensores: sensores.status === 'fulfilled' ? sensores.value : [],
         leituras: leituras.status === 'fulfilled' ? leituras.value.dados : null,
         alertas: alertas.status === 'fulfilled' ? alertas.value.alertas : null,
-        resumo: resumo.status === 'fulfilled' ? resumo.value : null,
         avisos,
       })
       setCarregando(false)
@@ -78,6 +76,36 @@ export default function PainelProdutor() {
     void carregar()
     return () => { ativo = false }
   }, [recarregar])
+
+  const chaveConsulta = `${propriedadeFiltro}-${recarregar}`
+  const [indicadores, setIndicadores] = useState<{
+    chave: string
+    resumo: DashboardResumo | null
+    areas: AreasProdutor | null
+    alertasDoDia: AlertasDoDiaProdutor | null
+  }>()
+
+  useEffect(() => {
+    let ativo = true
+    const propriedadeId = propriedadeFiltro ? Number(propriedadeFiltro) : undefined
+    void Promise.allSettled([
+      dashboardService.resumo({ propriedadeId }),
+      dashboardService.areasProdutor(propriedadeId),
+      dashboardService.alertasDoDiaProdutor(propriedadeId),
+    ] as const).then(([resumo, areas, alertasDoDia]) => {
+      if (ativo) setIndicadores({
+        chave: chaveConsulta,
+        resumo: resumo.status === 'fulfilled' ? resumo.value : null,
+        areas: areas.status === 'fulfilled' ? areas.value : null,
+        alertasDoDia: alertasDoDia.status === 'fulfilled' ? alertasDoDia.value : null,
+      })
+    })
+    return () => { ativo = false }
+  }, [chaveConsulta, propriedadeFiltro])
+
+  const indicadoresAtuais = indicadores?.chave === chaveConsulta ? indicadores : null
+  const areas = indicadoresAtuais?.areas
+  const alertasDoDia = indicadoresAtuais?.alertasDoDia
 
   const propriedades = useMemo(() =>
     propriedadeFiltro ? dados.propriedades.filter((p) => String(p.id) === propriedadeFiltro) : dados.propriedades,
@@ -94,11 +122,14 @@ export default function PainelProdutor() {
   const alertasFiltrados = propriedadeFiltro
     ? dados.alertas?.filter((alerta) => String(alerta.propriedadeId) === propriedadeFiltro) ?? null
     : dados.alertas
-  const ultimoInstante = dados.resumo?.ultimaLeitura?.dataHoraLeitura
-    ?? (dados.leituras?.length ? [...dados.leituras].sort((a, b) => Date.parse(b.dataHoraLeitura) - Date.parse(a.dataHoraLeitura))[0]?.dataHoraLeitura : null)
+  const ultimoInstante = indicadoresAtuais?.resumo?.ultimaLeitura?.dataHoraLeitura
+  const sensoresSelecionados = new Set(sensores.map(({ id }) => id))
+  const temLeitura = indicadoresAtuais?.resumo
+    ? ultimoInstante != null
+    : dados.leituras?.some(({ sensorId }) => sensoresSelecionados.has(sensorId))
   const dataColheita = [...lotes].filter((lote) => lote.colheitaEstimada && lote.colheitaEstimada >= new Date().toISOString().slice(0, 10))
     .sort((a, b) => (a.colheitaEstimada ?? '').localeCompare(b.colheitaEstimada ?? ''))[0]?.colheitaEstimada
-  const estadoAlertas: EstadoAlertas = dados.leituras === null || dados.leituras.length === 0 || alertasFiltrados === null
+  const estadoAlertas: EstadoAlertas = !temLeitura || alertasFiltrados === null
     ? { status: 'indisponivel' }
     : { status: 'ok', total: alertasFiltrados.length, alertas: alertasFiltrados }
 
@@ -119,7 +150,8 @@ export default function PainelProdutor() {
             {dados.propriedades.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
           </select>
         </label>
-        <span className="text-xs text-[#6f7c74]">Última leitura: {formatarDataHora(ultimoInstante)}
+        <span className="text-xs text-[#6f7c74]">Última leitura · {!indicadoresAtuais ? 'Carregando…' : !indicadoresAtuais.resumo ? 'Indisponível'
+          : ultimoInstante ? formatarDataHora(ultimoInstante) : 'Sem leituras'}
           {ultimoInstante && leituraAntiga(ultimoInstante) ? <strong className="ml-2 text-amber-800">Há mais de 60 min</strong> : null}
         </span>
       </div>
@@ -131,10 +163,17 @@ export default function PainelProdutor() {
           <IndicadorProdutor nome="Propriedades cadastradas" valor={carregando ? '—' : dados.avisos.some((v) => v.includes('propriedades')) ? '—' : propriedades.length} icone={Leaf} />
           <IndicadorProdutor nome="Lotes" valor={carregando ? '—' : dados.avisos.some((v) => v.includes('lotes')) ? '—' : lotes.length} icone={Sprout} />
           <IndicadorProdutor nome="Sensores ativos" valor={carregando || dados.avisos.some((v) => v.includes('sensores')) ? '—' : sensores.filter((s) => s.status === 'ATIVO').length} icone={Cpu} />
-          <IndicadorProdutor nome="Alertas observados hoje" valor={carregando ? '—' : alertasFiltrados ? alertasObservadosHoje(alertasFiltrados) : '—'} icone={AlertTriangle} ajuda="Apenas alertas de últimas leituras disponíveis; não é histórico completo do dia." />
-          <IndicadorProdutor nome="Área sob proteção" valor="—" icone={MapPinned} ajuda="A API ainda não disponibiliza esta classificação de área." />
-          <IndicadorProdutor nome="Área sob risco" valor="—" icone={ShieldAlert} ajuda="Sem indicador de risco calculado e validado." />
-          <IndicadorProdutor nome="Variação de mercado" valor="—" icone={TrendingUp} ajuda="Consulte a média e a variação por série na tela Mercado." />
+          <IndicadorProdutor nome={alertasDoDia ? 'Alertas do dia' : 'Alertas observados hoje'}
+            valor={!indicadoresAtuais ? '—' : alertasDoDia?.total ?? (alertasFiltrados ? alertasObservadosHoje(alertasFiltrados) : '—')}
+            icone={AlertTriangle} ajuda={alertasDoDia ? 'Episódios de risco registrados que ocorreram no dia, no horário de Recife.'
+              : 'Alertas das últimas leituras disponíveis.'} />
+          <IndicadorProdutor nome="Área sob proteção" valor={areas ? `${formatarNumero(areas.protecao, 2)} ha` : '—'}
+            icone={MapPinned} ajuda="Todos os sensores ativos do lote têm leitura de até 60 min dentro da faixa da cultura." />
+          <IndicadorProdutor nome="Área sob risco" valor={areas ? `${formatarNumero(areas.risco, 2)} ha` : '—'}
+            icone={ShieldAlert} ajuda="Ao menos um sensor ativo do lote tem leitura de até 60 min fora da faixa da cultura." />
+          <IndicadorProdutor nome="Área com dados insuficientes" valor={areas ? `${formatarNumero(areas.semDados, 2)} ha` : '—'}
+            icone={Leaf} ajuda="Sem cobertura suficiente de leituras válidas e recentes para classificar o lote." />
+          <VariacaoMercado key={propriedadeFiltro} ufPropriedade={propriedadeFiltro ? propriedades[0]?.uf : undefined} revisao={recarregar} />
           <IndicadorProdutor nome="Próxima colheita estimada" valor={dataColheita ? formatarData(dataColheita) : '—'} icone={CalendarDays} ajuda="Estimativa cadastrada no lote; não é recomendação agronômica." />
         </div>
       </section>
@@ -155,13 +194,7 @@ export default function PainelProdutor() {
         </section>
         <section className={cartao} aria-labelledby="planejamento-produtor">
           <h2 id="planejamento-produtor" className="text-base font-semibold text-[#1d2b23]">Planejamento e decisões</h2>
-          <div className="mt-4 space-y-3">
-            <div className="rounded-xl bg-[#f6f9f7] p-4"><p className="text-xs font-semibold uppercase tracking-wide text-[#638071]">Janela recomendada de colheita</p>
-              <p className="mt-2 text-sm font-medium">Indisponível — depende de fase fenológica, previsão e modelo validado.</p>
-              {dataColheita ? <p className="mt-1 text-xs text-[#6f7c74]">Há uma data estimada de colheita cadastrada: {formatarData(dataColheita)}.</p> : null}</div>
-            <div className="rounded-xl bg-[#f6f9f7] p-4"><p className="text-xs font-semibold uppercase tracking-wide text-[#638071]">Janela recomendada de exportação</p>
-              <p className="mt-2 text-sm font-medium">Indisponível — requer integração com tempo de transporte, cotações e cadeia do frio.</p></div>
-          </div>
+          <JanelasProdutor key={propriedadeFiltro} lotes={lotes} sensores={sensores} />
           <div className="mt-5 flex flex-wrap gap-3"><Link className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#087a49] px-4 py-2 text-sm font-semibold text-white hover:bg-[#075d39]" to="/logistica"><Truck size={16}/> Planejar transporte</Link>
             <Link className={botaoSecundario} to="/mercado"><TrendingUp size={16}/> Ver cotações</Link></div>
         </section>
