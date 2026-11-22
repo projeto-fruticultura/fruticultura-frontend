@@ -12,6 +12,7 @@ import {
   Users,
   Truck,
   Settings,
+  TrendingUp,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
@@ -79,7 +80,6 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
   const { usuario, sair } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Adiciona a rota de usuários na sidebar se o usuário for ADMIN ou TECNICO
   // Define os itens do menu conforme o perfil do usuário
   const navItems =
     usuario?.perfil === "ADMIN"
@@ -126,6 +126,12 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
               to: "/logistica",
               icon: Truck,
               key: "logistica" as const,
+            },
+            {
+              label: "Mercado",
+              to: "/mercado",
+              icon: TrendingUp,
+              key: "mercado" as const,
             },
           ];
 
