@@ -245,6 +245,9 @@ export default function Logistica() {
   const registros = consultaAtual?.dados ?? []
   const paginacao = consultaAtual?.paginacao
   const erroConsulta = consultaAtual?.erro
+  const temFiltroAtivo = Boolean(
+    filtroPropriedade || filtroModal || filtroSituacao,
+  )
 
   useEffect(() => {
     let ativo = true
@@ -292,6 +295,13 @@ export default function Logistica() {
     () => new Map(propriedades.map((p) => [p.id, p.nome])),
     [propriedades],
   )
+
+  function limparFiltros() {
+    setFiltroPropriedade('')
+    setFiltroModal('')
+    setFiltroSituacao('')
+    setPagina(1)
+  }
 
   function abrirNovo() {
     setErro('')
@@ -395,6 +405,32 @@ export default function Logistica() {
     )
   }
 
+  function obterInfoRegistro(r: LogisticaRegistro) {
+    const situacaoFrio = avaliarCadeiaFrio(r)
+    const frio =
+      r.exigeCadeiaFrio === null
+        ? {
+            texto: 'Exigência de refrigeração não informada',
+            estilo: 'bg-slate-100 text-slate-700',
+          }
+        : cadeiaFrio[situacaoFrio]
+    const nomePropriedade = r.propriedadeId
+      ? nomes.get(r.propriedadeId) ?? `Propriedade #${r.propriedadeId}`
+      : 'Propriedade não informada'
+    const textoSituacao =
+      SITUACOES.find((s) => s.valor === r.situacao)?.texto ?? r.situacao
+    const textoModal =
+      MODAIS.find((m) => m.valor === r.modal)?.texto ?? r.modal
+
+    return {
+      situacaoFrio,
+      frio,
+      nomePropriedade,
+      textoSituacao,
+      textoModal,
+    }
+  }
+
   return (
     <AppShell section="logistica">
       <main className="mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 lg:px-8 lg:py-7 xl:px-10">
@@ -432,14 +468,32 @@ export default function Logistica() {
           </div>
         ) : null}
 
-        <section className={cartao} aria-labelledby="filtros-logistica">
-          <h2
-            id="filtros-logistica"
-            className="mb-4 text-base font-semibold text-[#1d2b23]"
-          >
-            Filtrar transportes
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-3">
+        <section className={cartao} aria-labelledby="lista-logistica">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2
+              id="lista-logistica"
+              className="flex items-center gap-2 text-base font-semibold text-[#1d2b23]"
+            >
+              <Truck size={18} className="text-[#168150]" aria-hidden="true" />{' '}
+              Transportes{' '}
+              <span className="text-sm font-normal text-[#7a8780]">
+                {paginacao && !carregando ? `(${paginacao.total})` : ''}
+              </span>
+            </h2>
+
+            {temFiltroAtivo ? (
+              <button
+                type="button"
+                onClick={limparFiltros}
+                disabled={carregando || ocupado}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-[#dce4df] bg-white px-3 text-xs font-semibold text-[#35453c] transition hover:bg-[#f6f8f7] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+              >
+                <X size={14} aria-hidden="true" /> Limpar filtros
+              </button>
+            ) : null}
+          </div>
+
+          <div className="mt-4 grid gap-3 border-b border-[#e6ece8] pb-4 sm:grid-cols-3">
             <Campo rotulo="Propriedade">
               <select
                 className={campo}
@@ -494,144 +548,212 @@ export default function Logistica() {
               </select>
             </Campo>
           </div>
-        </section>
 
-        <section className={`${cartao} mt-4`} aria-labelledby="lista-logistica">
-          <h2
-            id="lista-logistica"
-            className="mb-4 flex items-center gap-2 text-base font-semibold text-[#1d2b23]"
-          >
-            <Truck size={18} className="text-[#168150]" aria-hidden="true" />{' '}
-            Transportes{' '}
-            <span className="text-sm font-normal text-[#7a8780]">
-              {paginacao && !carregando ? `(${paginacao.total})` : ''}
-            </span>
-          </h2>
-
-          {carregando ? (
-            <p role="status" className="text-sm text-[#6d7a72]">
-              Carregando transportes...
-            </p>
-          ) : erroConsulta ? (
-            <FeedbackMessage variant="error">{erroConsulta}</FeedbackMessage>
-          ) : registros.length === 0 ? (
-            <EstadoVazio>
-              Nenhum transporte cadastrado para os filtros selecionados.
-            </EstadoVazio>
-          ) : (
-            <div className="overflow-x-auto rounded-xl border border-[#e6ece8]">
-              <table className="w-full min-w-[940px] border-collapse text-left text-sm">
-                <caption className="sr-only">
-                  Lista de transportes da produção
-                </caption>
-                <thead className="bg-[#f3f7f4] text-[#435249]">
-                  <tr>
-                    <th scope="col" className="px-4 py-3">
-                      Propriedade / origem
-                    </th>
-                    <th scope="col" className="px-4 py-3">
-                      Destino
-                    </th>
-                    <th scope="col" className="px-4 py-3">
-                      Modal / transportadora
-                    </th>
-                    <th scope="col" className="px-4 py-3">
-                      Custo / tempo
-                    </th>
-                    <th scope="col" className="px-4 py-3">
-                      Situação / frio
-                    </th>
-                    <th scope="col" className="px-4 py-3">
-                      Ações
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#edf1ee]">
+          <div className="mt-4">
+            {carregando ? (
+              <div role="status" className="py-4 text-sm text-[#6d7a72]">
+                Carregando transportes...
+              </div>
+            ) : erroConsulta ? (
+              <FeedbackMessage variant="error">{erroConsulta}</FeedbackMessage>
+            ) : registros.length === 0 ? (
+              <EstadoVazio>
+                {temFiltroAtivo
+                  ? 'Nenhum transporte encontrado para os filtros selecionados.'
+                  : 'Nenhum transporte cadastrado até o momento.'}
+              </EstadoVazio>
+            ) : (
+              <>
+                {/* Cartões no celular */}
+                <div className="space-y-3 md:hidden">
                   {registros.map((r) => {
-                    const situacaoFrio = avaliarCadeiaFrio(r)
-                    const frio =
-                      r.exigeCadeiaFrio === null
-                        ? {
-                            texto: 'Exigência de refrigeração não informada',
-                            estilo: 'bg-slate-100 text-slate-700',
-                          }
-                        : cadeiaFrio[situacaoFrio]
+                    const {
+                      situacaoFrio,
+                      frio,
+                      nomePropriedade,
+                      textoSituacao,
+                      textoModal,
+                    } = obterInfoRegistro(r)
+
                     return (
-                      <tr key={r.id} className="align-top text-[#2d3a33]">
-                        <td className="px-4 py-3">
-                          <span className="font-semibold">
-                            {r.propriedadeId
-                              ? nomes.get(r.propriedadeId) ??
-                                `Propriedade #${r.propriedadeId}`
-                              : 'Propriedade não informada'}
+                      <article
+                        key={r.id}
+                        className="rounded-2xl border border-[#e1e7e3] bg-[#fcfdfb] p-4 shadow-2xs"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-[#15693E]">
+                              {nomePropriedade}
+                            </p>
+                            <h3 className="mt-1 text-sm font-semibold text-[#18251e]">
+                              {r.origem} → {r.destino}
+                            </h3>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-[#edf7f1] px-2.5 py-1 text-xs font-semibold text-[#15693E]">
+                            {textoSituacao}
                           </span>
-                          <p className="mt-1 text-xs text-[#78877e]">
-                            {r.origem}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3">{r.destino}</td>
-                        <td className="px-4 py-3">
-                          {MODAIS.find((m) => m.valor === r.modal)?.texto ??
-                            r.modal}
-                          <p className="mt-1 text-xs text-[#78877e]">
-                            {r.transportadora ?? 'Sem transportadora'}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3">
-                          {r.custo === null
-                            ? 'Não informado'
-                            : formatarMoeda(r.custo)}
-                          <p className="mt-1 text-xs text-[#78877e]">
-                            {r.tempoEstimadoHoras === null
-                              ? 'Tempo não informado'
-                              : `${formatarNumero(r.tempoEstimadoHoras)} h estimadas`}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="font-medium">
-                            {
-                              SITUACOES.find((s) => s.valor === r.situacao)
-                                ?.texto
-                            }
-                          </span>
+                        </div>
+
+                        <div className="mt-3">
                           <p
-                            className={`mt-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold ${frio.estilo}`}
+                            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold ${frio.estilo}`}
                           >
                             {situacaoFrio === 'ATENCAO' ? (
-                              <AlertTriangle size={12} aria-hidden="true" />
+                              <AlertTriangle size={13} aria-hidden="true" />
                             ) : null}
                             {frio.texto}
                           </p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              disabled={ocupado}
-                              onClick={() => abrirEdicao(r)}
-                              className="rounded-lg border border-[#dce4df] p-2 text-[#087a49] transition hover:bg-[#f6faf7] focus-visible:ring-2 focus-visible:ring-[#009B4D] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                              aria-label={`Editar transporte ${r.id}`}
-                            >
-                              <Pencil size={16} aria-hidden="true" />
-                            </button>
-                            <button
-                              type="button"
-                              disabled={ocupado}
-                              onClick={() => setRegistroParaInativar(r)}
-                              className="rounded-lg border border-[#dce4df] p-2 text-red-700 transition hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                              aria-label={`Inativar transporte ${r.id}`}
-                            >
-                              <X size={16} aria-hidden="true" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#edf1ee] pt-3 text-xs text-[#68756d]">
+                          <span>
+                            {textoModal} ·{' '}
+                            {r.transportadora ?? 'Sem transportadora'}
+                          </span>
+                          <span className="font-medium text-[#2d3a33]">
+                            {r.custo === null
+                              ? 'Custo não informado'
+                              : formatarMoeda(r.custo)}
+                            {r.tempoEstimadoHoras !== null
+                              ? ` · ${formatarNumero(r.tempoEstimadoHoras)} h`
+                              : ''}
+                          </span>
+                        </div>
+
+                        <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-[#edf1ee] pt-3">
+                          <button
+                            type="button"
+                            disabled={ocupado}
+                            onClick={() => abrirEdicao(r)}
+                            className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#c3e2cf] bg-white px-3 text-xs font-semibold text-[#15693E] transition hover:bg-[#edf8f1] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                          >
+                            <Pencil size={14} aria-hidden="true" /> Editar frete
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={ocupado}
+                            onClick={() => setRegistroParaInativar(r)}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#dce4df] bg-white text-red-700 transition hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                            aria-label={`Inativar transporte ${r.id}`}
+                          >
+                            <X size={15} aria-hidden="true" />
+                          </button>
+                        </div>
+                      </article>
                     )
                   })}
-                </tbody>
-              </table>
-            </div>
-          )}
+                </div>
+
+                {/* Tabela no desktop */}
+                <div className="hidden overflow-x-auto rounded-xl border border-[#e6ece8] md:block">
+                  <table className="w-full min-w-[940px] border-collapse text-left text-sm">
+                    <caption className="sr-only">
+                      Lista de transportes da produção
+                    </caption>
+                    <thead className="bg-[#f3f7f4] text-[#435249]">
+                      <tr>
+                        <th scope="col" className="px-4 py-3">
+                          Propriedade / origem
+                        </th>
+                        <th scope="col" className="px-4 py-3">
+                          Destino
+                        </th>
+                        <th scope="col" className="px-4 py-3">
+                          Modal / transportadora
+                        </th>
+                        <th scope="col" className="px-4 py-3">
+                          Custo / tempo
+                        </th>
+                        <th scope="col" className="px-4 py-3">
+                          Situação / frio
+                        </th>
+                        <th scope="col" className="px-4 py-3">
+                          Ações
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#edf1ee]">
+                      {registros.map((r) => {
+                        const {
+                          situacaoFrio,
+                          frio,
+                          nomePropriedade,
+                          textoSituacao,
+                          textoModal,
+                        } = obterInfoRegistro(r)
+
+                        return (
+                          <tr key={r.id} className="align-top text-[#2d3a33]">
+                            <td className="px-4 py-3">
+                              <span className="font-semibold">
+                                {nomePropriedade}
+                              </span>
+                              <p className="mt-1 text-xs text-[#78877e]">
+                                {r.origem}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3">{r.destino}</td>
+                            <td className="px-4 py-3">
+                              {textoModal}
+                              <p className="mt-1 text-xs text-[#78877e]">
+                                {r.transportadora ?? 'Sem transportadora'}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3">
+                              {r.custo === null
+                                ? 'Não informado'
+                                : formatarMoeda(r.custo)}
+                              <p className="mt-1 text-xs text-[#78877e]">
+                                {r.tempoEstimadoHoras === null
+                                  ? 'Tempo não informado'
+                                  : `${formatarNumero(r.tempoEstimadoHoras)} h estimadas`}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="font-medium">
+                                {textoSituacao}
+                              </span>
+                              <p
+                                className={`mt-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold ${frio.estilo}`}
+                              >
+                                {situacaoFrio === 'ATENCAO' ? (
+                                  <AlertTriangle size={12} aria-hidden="true" />
+                                ) : null}
+                                {frio.texto}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  disabled={ocupado}
+                                  onClick={() => abrirEdicao(r)}
+                                  className="rounded-lg border border-[#dce4df] p-2 text-[#087a49] transition hover:bg-[#f6faf7] focus-visible:ring-2 focus-visible:ring-[#009B4D] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                                  aria-label={`Editar transporte ${r.id}`}
+                                >
+                                  <Pencil size={16} aria-hidden="true" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={ocupado}
+                                  onClick={() => setRegistroParaInativar(r)}
+                                  className="rounded-lg border border-[#dce4df] p-2 text-red-700 transition hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                                  aria-label={`Inativar transporte ${r.id}`}
+                                >
+                                  <X size={16} aria-hidden="true" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
 
           {paginacao && !carregando && paginacao.totalPaginas > 1 ? (
             <nav
