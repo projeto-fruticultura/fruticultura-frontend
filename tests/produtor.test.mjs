@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { avaliarCadeiaFrio, condicaoPropriedade, leituraAntiga, mediaComparavel } from '../src/lib/indicadoresProdutor.ts'
-import { decodificarLogistica } from '../src/lib/decodificarLogistica.ts'
+import { decodificarLogistica, decodificarPaginaLogistica } from '../src/lib/decodificarLogistica.ts'
 import { serieComparavel } from '../src/lib/seriesMercado.ts'
 
 const agora = Date.parse('2026-11-18T16:00:00Z')
@@ -78,4 +78,32 @@ test('mercado separa séries por CEASA, variedade, produto e unidade', () => {
 test('mercado elimina mesma cotação duplicada sem inventar séries', () => {
   const cotacao = { produto: 'UVA', variedade: 'Italia', uf: 'PE', unidade: 'kg', ceasa: 'Recife', data: '2026-11-17', preco:10 }
   assert.equal(serieComparavel({precoAtual:cotacao,historico:[cotacao]},30,agora)[0].registros.length,1)
+})
+
+test('lê a página do backend e diferencia exigência desconhecida de dispensada', () => {
+  const frete = { id: 1, origem: 'Petrolina', destino: 'Recife', modal: 'RODOVIARIO', situacao: 'PLANEJADA' }
+  const paginacao = { pagina: 2, limite: 20, total: 22, totalPaginas: 2 }
+  const pagina = decodificarPaginaLogistica({
+    dados: [
+      { ...frete, exigeRefrigeracaoRapida: null },
+      { ...frete, id: 2, exigeRefrigeracaoRapida: false },
+    ],
+    paginacao,
+  })
+  assert.deepEqual(pagina.paginacao, paginacao)
+  assert.deepEqual(pagina.dados.map(({ exigeCadeiaFrio }) => exigeCadeiaFrio), [null, false])
+  assert.throws(() => decodificarPaginaLogistica({ dados: [], paginacao: { ...paginacao, pagina: -1 } }))
+})
+
+test('cadeia do frio inclui os limites de 0 °C e 10 °C quando a API retorna medições', () => {
+  for (const temperatura of [0, 10]) {
+    const [frete] = decodificarLogistica([{
+      id: 1, origem: 'Petrolina', destino: 'Recife', modal: 'RODOVIARIO', situacao: 'PLANEJADA',
+      exigeRefrigeracaoRapida: true,
+      colhidoEm: transporte.colhidoEm,
+      resfriadoEm: transporte.resfriadoEm,
+      temperaturaResfriamentoC: temperatura,
+    }])
+    assert.equal(avaliarCadeiaFrio(frete), 'CONFORME')
+  }
 })

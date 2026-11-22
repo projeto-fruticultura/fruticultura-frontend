@@ -175,8 +175,8 @@ export function PropertyForm({
         area: Number(form.area),
         cidade: form.cidade.trim(),
         uf: form.uf,
-        latitude: Number(form.latitude),
-        longitude: Number(form.longitude),
+        latitude: form.latitude.trim() ? Number(form.latitude) : undefined,
+        longitude: form.longitude.trim() ? Number(form.longitude) : undefined,
       });
     } catch (error) {
       if (error instanceof ApiError) {
@@ -314,6 +314,7 @@ export function PropertyForm({
               <p className="mt-1 text-sm leading-6 text-[#6a776f]">
                 Use cidade e coordenadas geográficas para identificar a posição
                 da propriedade.
+                {!initialValues && " Se deixar coordenadas em branco, o sistema usa uma estimativa da UF."}
               </p>
             </div>
 
@@ -345,7 +346,6 @@ export function PropertyForm({
 
               <Field
                 label="Latitude"
-                required
                 error={errors.latitude}
                 htmlFor={fields.latitude}
               >
@@ -370,7 +370,6 @@ export function PropertyForm({
 
               <Field
                 label="Longitude"
-                required
                 error={errors.longitude}
                 htmlFor={fields.longitude}
               >

@@ -164,6 +164,9 @@ export default function DetalhePropriedade() {
                 <p className="mt-1 mb-5 text-sm leading-6 text-[#69766e]">
                   Prévia da posição geográfica cadastrada.
                 </p>
+                {item.coordenadasEstimadasUf === true ? (
+                  <p className="mb-4 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">Coordenadas estimadas por região</p>
+                ) : null}
                 <PropertyLocationPreview
                   latitude={item.latitude}
                   longitude={item.longitude}

@@ -27,6 +27,7 @@ export interface ApiErrorBody {
 }
 
 export interface PropriedadeResumo {
+  coordenadasEstimadasUf?: boolean | null
   id: number
   nome: string
   cidade: string
@@ -58,8 +59,8 @@ export interface PropriedadePayload {
   area: number
   cidade: string
   uf: string
-  latitude: number
-  longitude: number
+  latitude?: number
+  longitude?: number
 }
 
 export interface Cultura {

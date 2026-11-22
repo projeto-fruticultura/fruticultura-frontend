@@ -1,4 +1,4 @@
-import type { LogisticaRegistro, SituacaoLogistica } from '@/types/logistica'
+import type { LogisticaRegistro, PaginacaoLogistica, SituacaoLogistica } from '@/types/logistica'
 
 function objeto(valor: unknown): Record<string, unknown> {
   if (typeof valor !== 'object' || valor === null || Array.isArray(valor)) {
@@ -12,7 +12,7 @@ function texto(valor: unknown): string | null {
 }
 
 function numero(valor: unknown): number | null {
-  if (valor === null || valor === undefined || valor === '') return null
+  if (typeof valor !== 'number' && (typeof valor !== 'string' || !valor.trim())) return null
   const n = Number(valor)
   return Number.isFinite(n) ? n : null
 }
@@ -37,6 +37,7 @@ export function decodificarLogistica(payload: unknown): LogisticaRegistro[] {
     const destino = texto(v.destino)
     const modal = texto(v.modal)
     if (!id || !origem || !destino || !modal) throw new Error('Registro de logística com campos obrigatórios inválidos.')
+    const exige = Object.hasOwn(v, 'exigeRefrigeracaoRapida') ? v.exigeRefrigeracaoRapida : v.exigeCadeiaFrio
     return {
       id,
       propriedadeId: numero(v.propriedadeId),
@@ -47,10 +48,23 @@ export function decodificarLogistica(payload: unknown): LogisticaRegistro[] {
       custo: numero(v.custo),
       situacao: situacaoNormalizada(v.situacao),
       tempoEstimadoHoras: numero(v.tempoEstimadoHoras),
-      exigeCadeiaFrio: typeof v.exigeCadeiaFrio === 'boolean' ? v.exigeCadeiaFrio : null,
+      exigeCadeiaFrio: typeof exige === 'boolean' ? exige : null,
       colhidoEm: texto(v.colhidoEm),
       resfriadoEm: texto(v.resfriadoEm),
       temperaturaResfriamentoC: numero(v.temperaturaResfriamentoC),
     }
   })
+}
+
+export function decodificarPaginaLogistica(payload: unknown) {
+  const obj = objeto(payload)
+  const { pagina, limite, total, totalPaginas } = objeto(obj.paginacao)
+  function inteiro(valor: unknown, min: number): valor is number {
+    return typeof valor === 'number' && Number.isSafeInteger(valor) && valor >= min
+  }
+  if (!inteiro(pagina, 1) || !inteiro(limite, 1) || !inteiro(total, 0) || !inteiro(totalPaginas, 0)) {
+    throw new Error('A API retornou uma paginação de fretes inválida.')
+  }
+  const paginacao: PaginacaoLogistica = { pagina, limite, total, totalPaginas }
+  return { dados: decodificarLogistica(payload), paginacao }
 }
