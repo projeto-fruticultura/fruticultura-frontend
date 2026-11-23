@@ -1,10 +1,10 @@
 import {
   Bell,
+  ChevronDown,
   ChevronRight,
   Cpu,
   LayoutDashboard,
   Leaf,
-  LogOut,
   Menu,
   Sprout,
   X,
@@ -14,7 +14,7 @@ import {
   Settings,
   TrendingUp,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { PwaInstallButton } from "@/components/ui/PwaInstallButton";
@@ -76,9 +76,27 @@ function getInitials(name?: string) {
     .join("");
 }
 
+function getFirstName(name?: string) {
+  const first = name?.trim().split(/\s+/)[0];
+  return first || "Usuário";
+}
+
 export function AppShell({ children, section = "properties" }: AppShellProps) {
   const { usuario, sair } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDrawerOpen, setUserDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mobileMenuOpen && !userDrawerOpen) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMobileMenuOpen(false);
+        setUserDrawerOpen(false);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileMenuOpen, userDrawerOpen]);
 
   // Define os itens do menu conforme o perfil do usuário
   const navItems =
@@ -182,17 +200,6 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
           </NavLink>
         ))}
       </nav>
-
-      <div className="border-t border-white/10 p-3">
-        <button
-          type="button"
-          onClick={() => void sair()}
-          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-        >
-          <LogOut size={18} aria-hidden="true" />
-          Sair
-        </button>
-      </div>
     </>
   );
 
@@ -221,10 +228,63 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
         </div>
       ) : null}
 
+      {userDrawerOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex justify-end"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu da conta"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/35 backdrop-blur-[2px]"
+            onClick={() => setUserDrawerOpen(false)}
+            aria-label="Fechar menu da conta"
+          />
+          <aside className="relative flex h-full w-[min(86vw,320px)] flex-col justify-between border-l border-[#e1e7e3] bg-white shadow-2xl">
+            <div className="flex min-h-[68px] items-center justify-between gap-3 border-b border-[#e1e7e3] px-5 py-3.5">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#7ecba3] bg-[#cdeedd] text-base font-extrabold text-[#05472a]">
+                  {getInitials(usuario?.nome)}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold text-[#18251e]">
+                    Olá, {getFirstName(usuario?.nome)}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[#68756d]">Tudo bem?</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setUserDrawerOpen(false)}
+                className="shrink-0 rounded-xl p-2 text-[#4c5d53] transition hover:bg-[#f3f7f4] hover:text-[#18251e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
+                aria-label="Fechar menu da conta"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="border-t border-[#e1e7e3] p-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setUserDrawerOpen(false);
+                  void sair();
+                }}
+                className="flex min-h-11 w-full cursor-pointer items-center justify-center rounded-xl border border-red-300 bg-red-100/75 px-4 text-sm font-semibold text-[#991b1b] shadow-2xs transition hover:border-red-400 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+              >
+                Sair
+              </button>
+            </div>
+          </aside>
+        </div>
+      ) : null}
+
       <div className="min-w-0">
         <header className="sticky top-0 z-40 border-b border-[#e1e7e3] bg-white/95 backdrop-blur-md">
-          <div className="flex min-h-[68px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 xl:px-10">
-            <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-4">
+          <div className="flex min-h-[68px] items-center justify-between gap-2.5 px-3.5 sm:gap-4 sm:px-6 lg:px-8 xl:px-10">
+            <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
@@ -251,12 +311,12 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
               <ClimaValeTicker />
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
               <PwaInstallButton compact className="hidden sm:inline-flex" />
 
               <button
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#4c5d53] transition hover:bg-[#f3f7f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#4c5d53] transition hover:bg-[#f3f7f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
                 aria-label="Notificações"
               >
                 <Bell size={18} />
@@ -267,19 +327,34 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
                 aria-hidden="true"
               />
 
-              <div className="flex items-center gap-2 rounded-full bg-[#f3f6f4] py-1.5 pl-3 pr-1.5">
-                <div className="hidden text-right sm:block">
-                  <p className="max-w-[180px] truncate text-xs font-semibold text-[#334139]">
+              <button
+                type="button"
+                onClick={() => setUserDrawerOpen(true)}
+                aria-expanded={userDrawerOpen}
+                aria-haspopup="dialog"
+                aria-label="Abrir menu da conta"
+                className="group flex shrink-0 cursor-pointer items-center rounded-full border border-[#d2ddd7] bg-white p-1 shadow-2xs transition hover:border-[#86c8a6] hover:bg-[#f4faf6] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0b663e]/40 sm:gap-2.5 sm:py-1.5 sm:pl-2 sm:pr-3"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#7ecba3] bg-[#cdeedd] text-xs font-extrabold tracking-tight text-[#05472a] transition group-hover:border-[#5eb98b] group-hover:bg-[#bee7d3]">
+                  {getInitials(usuario?.nome)}
+                </span>
+                <div className="hidden text-left sm:block">
+                  <p className="max-w-[115px] truncate text-xs font-semibold leading-tight text-[#1e2c25] md:max-w-[165px] lg:max-w-[190px]">
                     {usuario?.nome ?? "Usuário ValeSafra"}
                   </p>
-                  <p className="mt-0.5 text-[10px] uppercase tracking-wide text-[#7b887f]">
+                  <p className="mt-0.5 text-[10px] font-semibold uppercase leading-none tracking-wider text-[#55665d]">
                     {usuario?.perfil ?? "Conta"}
                   </p>
                 </div>
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#009B4D] text-[11px] font-bold text-white">
-                  {getInitials(usuario?.nome)}
-                </span>
-              </div>
+                <ChevronDown
+                  size={16}
+                  strokeWidth={2.25}
+                  aria-hidden="true"
+                  className={`hidden shrink-0 text-[#3d4d44] transition-transform duration-200 group-hover:text-[#05472a] sm:block ${
+                    userDrawerOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
             </div>
           </div>
         </header>
