@@ -4,7 +4,6 @@ import { AuthProvider } from "@/context/AuthContext";
 import Cadastro from "@/pages/Auth/Cadastro";
 import EsqueciSenha from "@/pages/Auth/EsqueciSenha";
 import Login from "@/pages/Auth/Login";
-import Home from "@/pages/Home/Home";
 import DetalhePropriedade from "@/pages/Propriedades/DetalhePropriedade";
 import EditarPropriedade from "@/pages/Propriedades/EditarPropriedade";
 import NovaPropriedade from "@/pages/Propriedades/NovaPropriedade";
