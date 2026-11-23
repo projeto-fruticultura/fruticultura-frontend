@@ -37,13 +37,25 @@ const CACHE_TTL_MS = 15 * 60 * 1000
 const INTERVALO_TRANSICAO_MS = 6000
 
 function descreverClima(codigo: number) {
-  if (codigo === 0) return { texto: 'Céu limpo', Icone: Sun }
-  if (codigo <= 2) return { texto: 'Parcialmente nublado', Icone: CloudSun }
-  if (codigo === 3) return { texto: 'Nublado', Icone: Cloud }
-  if (codigo >= 51 && codigo <= 57) return { texto: 'Garoa', Icone: CloudDrizzle }
-  if (codigo >= 61 && codigo <= 82) return { texto: 'Chuva', Icone: CloudRain }
-  if (codigo >= 95) return { texto: 'Trovoada', Icone: CloudLightning }
-  return { texto: 'Tempo firme', Icone: CloudSun }
+  if (codigo === 0) {
+    return { texto: 'Céu limpo', Icone: Sun, corIcone: 'text-[#F59E0B]' }
+  }
+  if (codigo <= 2) {
+    return { texto: 'Parcialmente nublado', Icone: CloudSun, corIcone: 'text-[#EAB308]' }
+  }
+  if (codigo === 3) {
+    return { texto: 'Nublado', Icone: Cloud, corIcone: 'text-[#64748B]' }
+  }
+  if (codigo >= 51 && codigo <= 57) {
+    return { texto: 'Garoa', Icone: CloudDrizzle, corIcone: 'text-[#0EA5E9]' }
+  }
+  if (codigo >= 61 && codigo <= 82) {
+    return { texto: 'Chuva', Icone: CloudRain, corIcone: 'text-[#2563EB]' }
+  }
+  if (codigo >= 95) {
+    return { texto: 'Trovoada', Icone: CloudLightning, corIcone: 'text-[#7C3AED]' }
+  }
+  return { texto: 'Tempo firme', Icone: CloudSun, corIcone: 'text-[#EAB308]' }
 }
 
 export function ClimaValeTicker() {
@@ -120,7 +132,7 @@ export function ClimaValeTicker() {
   }
 
   const cidade = dadosClima[indiceAtual]
-  const { texto, Icone } = descreverClima(cidade.codigoClima)
+  const { texto, Icone, corIcone } = descreverClima(cidade.codigoClima)
 
   function avancarCidade() {
     setIndiceAtual((prev) => (prev + 1) % dadosClima.length)
@@ -158,7 +170,7 @@ export function ClimaValeTicker() {
         onMouseLeave={() => setPausado(false)}
         title="Clima no Vale do São Francisco (clique para alternar cidade)"
         aria-label={`Clima em ${cidade.nome}-${cidade.uf}: ${cidade.temperatura}°C, umidade ${cidade.umidade}%, ${texto}. Clique para próxima cidade.`}
-        className="group relative hidden flex-col justify-center rounded-xl border border-[#e2eae5] bg-[#f4f8f5] px-3 py-1.5 text-left transition-colors hover:border-[#c9d8ce] hover:bg-[#ecf3ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D] md:inline-flex"
+        className="group relative hidden cursor-pointer items-center rounded-lg px-1 py-1.5 text-left transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D] md:inline-flex"
       >
         <div
           key={`${cidade.nome}-${cicloKey}`}
@@ -168,9 +180,9 @@ export function ClimaValeTicker() {
           className="flex items-center gap-2.5"
         >
           <Icone
-            size={17}
-            strokeWidth={1.9}
-            className="shrink-0 text-[#5c6d63]"
+            size={18}
+            strokeWidth={2}
+            className={`shrink-0 ${corIcone}`}
             aria-hidden="true"
           />
 
@@ -193,7 +205,7 @@ export function ClimaValeTicker() {
         {dadosClima.length > 1 && (
           <span
             aria-hidden="true"
-            className="mt-1.5 block h-[1.5px] w-full overflow-hidden rounded-full bg-[#dfe8e2]"
+            className="pointer-events-none absolute inset-x-1 bottom-0 block h-[1.5px] overflow-hidden rounded-full bg-[#e6ece8]"
           >
             <span
               key={`line-${cicloKey}`}
