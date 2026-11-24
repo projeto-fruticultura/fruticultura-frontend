@@ -1,6 +1,6 @@
-import { ArrowLeft, Cpu } from 'lucide-react'
+import { Cpu } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import { AppShell, PageBreadcrumb } from '@/components/app/AppShell'
 import { SensorForm, type SensorPayload } from '@/components/app/sensores/SensorForm'
@@ -67,14 +67,6 @@ export default function EditarSensor() {
             { label: 'Editar' },
           ]}
         />
-
-        <Link
-          to="/sensores"
-          className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#15693E] transition hover:text-[#009B4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
-        >
-          <ArrowLeft size={17} aria-hidden="true" />
-          Voltar para sensores
-        </Link>
 
         <section className="mb-6 overflow-hidden rounded-[24px] border border-[#e1e7e3] bg-white shadow-sm">
           <div className="border-l-[7px] border-[#009B4D] px-5 py-6 sm:px-7">
