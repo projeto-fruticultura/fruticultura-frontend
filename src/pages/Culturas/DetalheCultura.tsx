@@ -95,13 +95,7 @@ export default function DetalheCultura() {
                 : erro}
             </p>
 
-            <Link
-              to="/culturas"
-              className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#009B4D] px-5 text-sm font-semibold text-white transition hover:bg-[#008844]"
-            >
-              <ArrowLeft size={17} />
-              Voltar para culturas
-            </Link>
+
           </div>
         </div>
       </AppShell>
