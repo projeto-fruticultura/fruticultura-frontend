@@ -1,8 +1,7 @@
-
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AlertDialog } from '@base-ui/react/alert-dialog'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Save, ShieldCheck, Sprout, UserPen, Wrench } from 'lucide-react'
 
 import { AppShell, PageBreadcrumb } from '@/components/app/AppShell'
 import { Button } from '@/components/ui/button'
@@ -13,6 +12,33 @@ import { usuarioService } from '@/services/usuarioService'
 import type { Usuario } from '@/types/api'
 
 type DadosEdicao = Pick<Usuario, 'nome' | 'email'>
+
+function renderBadgePerfil(perfil: Usuario['perfil']) {
+  if (perfil === 'ADMIN') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+        <ShieldCheck size={14} aria-hidden="true" />
+        ADMIN
+      </span>
+    )
+  }
+
+  if (perfil === 'TECNICO') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+        <Wrench size={14} aria-hidden="true" />
+        TÉCNICO
+      </span>
+    )
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-[#edf7f1] px-3 py-1 text-xs font-semibold text-[#15693E]">
+      <Sprout size={14} aria-hidden="true" />
+      PRODUTOR
+    </span>
+  )
+}
 
 export default function EditarUsuario() {
   const { id: parametroId } = useParams<{ id: string }>()
@@ -197,20 +223,32 @@ export default function EditarUsuario() {
 
         <Link
           to="/usuarios"
-          className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#15693E] hover:underline"
+          className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#15693E] transition hover:text-[#009B4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
         >
           <ArrowLeft size={17} aria-hidden="true" />
           Voltar para usuários
         </Link>
 
-        <h1 className="text-[clamp(2rem,3vw,2.75rem)] font-semibold tracking-[-0.04em] text-[#18251e]">
-          Editar usuário
-        </h1>
+        <section className="mb-6 overflow-hidden rounded-[24px] border border-[#e1e7e3] bg-white shadow-sm">
+          <div className="border-l-[7px] border-[#009B4D] px-5 py-6 sm:px-7">
+            <div className="flex items-start gap-4">
+              <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#edf7f1] text-[#15693E] sm:flex">
+                <UserPen size={22} aria-hidden="true" />
+              </span>
 
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#68756d]">
-          Atualize o nome e o e-mail. O perfil e o status estão disponíveis
-          para consulta.
-        </p>
+              <div>
+                <h1 className="text-[clamp(2rem,3vw,2.75rem)] font-semibold tracking-[-0.04em] text-[#18251e]">
+                  Editar usuário
+                </h1>
+
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#68756d]">
+                  Atualize o nome e o e-mail. O perfil e o status estão
+                  disponíveis para consulta.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {!idValido ? (
           <div className="mt-6">
@@ -230,7 +268,7 @@ export default function EditarUsuario() {
           </div>
         ) : usuarioEditado ? (
           <>
-            <div className="mt-6 space-y-3">
+            <div className="mb-6 space-y-3">
               {mensagemSucesso && (
                 <FeedbackMessage variant="success">
                   {mensagemSucesso}
@@ -247,7 +285,7 @@ export default function EditarUsuario() {
             <form
               onSubmit={solicitarConfirmacao}
               noValidate
-              className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(300px,.7fr)]"
+              className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(300px,.7fr)]"
             >
               <section className="rounded-2xl border border-[#e0e7e2] bg-white p-5 shadow-sm sm:p-6">
                 <h2 className="text-lg font-semibold text-[#1c2922]">
@@ -319,34 +357,45 @@ export default function EditarUsuario() {
 
                   <div className="mt-5 space-y-4 text-sm">
                     <div>
-                      <p className="font-semibold text-[#68756d]">
+                      <p className="mb-1.5 font-semibold text-[#68756d]">
                         Perfil
                       </p>
-                      <p className="mt-1 text-[#25332b]">
-                        {usuarioEditado.perfil}
-                      </p>
+                      {renderBadgePerfil(usuarioEditado.perfil)}
                     </div>
 
                     <div>
-                      <p className="font-semibold text-[#68756d]">
+                      <p className="mb-1.5 font-semibold text-[#68756d]">
                         Status
                       </p>
-                      <p className="mt-1 text-[#25332b]">
-                        {usuarioEditado.status}
-                      </p>
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                          usuarioEditado.status === 'ATIVO'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-red-50 text-red-700'
+                        }`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            usuarioEditado.status === 'ATIVO'
+                              ? 'bg-emerald-600'
+                              : 'bg-red-600'
+                          }`}
+                        />
+                        {usuarioEditado.status === 'ATIVO' ? 'Ativo' : 'Inativo'}
+                      </span>
                     </div>
                   </div>
 
-                  <p className="mt-5 text-xs leading-5 text-[#68756d]">
-                    A senha não é exibida. Sua redefinição será tratada
-                    em uma funcionalidade administrativa separada.
+                  <p className="mt-5 border-t border-[#edf1ee] pt-4 text-xs leading-5 text-[#68756d]">
+                    A senha não é exibida. Sua redefinição será tratada em uma
+                    funcionalidade administrativa separada.
                   </p>
                 </section>
 
                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                   <Link
                     to="/usuarios"
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#d9e2db] px-5 text-sm font-semibold text-[#334139] hover:bg-[#f5f8f6]"
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#d9e2db] bg-white px-5 text-sm font-semibold text-[#334139] transition hover:bg-[#f5f8f6]"
                   >
                     Cancelar
                   </Link>
@@ -370,7 +419,7 @@ export default function EditarUsuario() {
               <AlertDialog.Portal>
                 <AlertDialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
 
-                <AlertDialog.Popup className="fixed left-1/2 top-1/2 z-[51] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+                <AlertDialog.Popup className="fixed left-1/2 top-1/2 z-[51] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[#e1e7e3] bg-white p-6 shadow-2xl">
                   <AlertDialog.Title className="text-xl font-semibold text-[#18251e]">
                     Confirmar edição
                   </AlertDialog.Title>

@@ -16,6 +16,18 @@ export interface DashboardResumo {
   janelaMediasHoras: number
 }
 
+export interface AreasProdutor {
+  protecao: number
+  risco: number
+  semDados: number
+}
+
+export interface AlertasDoDiaProdutor {
+  total: number
+  inicioDia: string
+  fuso: string
+}
+
 export interface MediaDashboard {
   periodo: string
   temperaturaMedia: number
@@ -52,6 +64,16 @@ function sanitizarId(valor: unknown): number | undefined {
 }
 
 export const dashboardService = {
+  areasProdutor(propriedadeId?: number) {
+    const query = propriedadeId ? `?propriedadeId=${propriedadeId}` : ''
+    return apiRequest<AreasProdutor>(`/dashboard/produtor/areas${query}`)
+  },
+
+  alertasDoDiaProdutor(propriedadeId?: number) {
+    const query = propriedadeId ? `?propriedadeId=${propriedadeId}` : ''
+    return apiRequest<AlertasDoDiaProdutor>(`/dashboard/produtor/alertas-do-dia${query}`)
+  },
+
   async resumo(filtros: FiltrosDashboard = {}): Promise<DashboardResumo> {
     const query = new URLSearchParams()
     const pId = sanitizarId(filtros.propriedadeId)

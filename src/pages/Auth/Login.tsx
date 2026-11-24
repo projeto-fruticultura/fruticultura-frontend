@@ -20,7 +20,7 @@ export default function Login() {
   const [enviando, setEnviando] = useState(false)
   const sucesso = (location.state as LocationState | null)?.sucesso
 
-  if (!carregando && usuario) return <Navigate to="/propriedades" replace />
+  if (!carregando && usuario) return <Navigate to="/painel" replace />
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -34,7 +34,7 @@ export default function Login() {
     setEnviando(true)
     try {
       await entrar(email.trim(), senha)
-      navigate('/propriedades', { replace: true })
+      navigate('/painel', { replace: true })
     } catch (error) {
       setErro(error instanceof ApiError ? error.message : 'Não foi possível entrar. Tente novamente.')
     } finally {
@@ -45,7 +45,9 @@ export default function Login() {
   return (
     <AuthLayout>
       <div className="mb-7">
-        <h1 className="mt-2 text-[clamp(1.5rem,2.5vw,1.5rem)] font-semibold tracking-[-0.035em] text-[#14212b]">Entrar no ValeSafra</h1>
+        <h1 className="mt-2 text-[clamp(1.5rem,2.5vw,1.5rem)] font-semibold tracking-[-0.035em] text-[#14212b]">
+          Entrar no ValeSafra
+        </h1>
       </div>
 
       <div className="space-y-4">
@@ -75,25 +77,24 @@ export default function Login() {
           required
         />
 
-        <div className="flex justify-end">
-        </div>
+        <div className="flex justify-end" />
 
         <button
           type="submit"
           disabled={enviando}
-          className="flex h-13 w-full items-center justify-center rounded-xl bg-[#009B4D] px-5 text-[15px] font-semibold text-white shadow-[0_12px_24px_rgba(0,155,77,0.18)] transition hover:bg-[#008844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/25 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-13 w-full items-center justify-center rounded-xl bg-[#009B4D] px-5 text-[15px] font-semibold text-white transition hover:bg-[#008844] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {enviando ? 'Entrando...' : 'Entrar'}
         </button>
 
-        <div className='flex justify-center'>
-                  <Link
+        <div className="flex justify-center">
+          <Link
             to="/esqueci-senha"
             className="rounded-md text-sm font-semibold text-[#15693E] underline-offset-4 transition hover:text-[#009B4D] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
           >
             Esqueceu a senha?
           </Link>
-          </div>
+        </div>
       </form>
 
       <p className="mt-7 text-center text-sm text-[#69747e]">

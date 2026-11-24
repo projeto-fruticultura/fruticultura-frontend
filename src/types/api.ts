@@ -27,12 +27,21 @@ export interface ApiErrorBody {
 }
 
 export interface PropriedadeResumo {
+  coordenadasEstimadasUf?: boolean | null
   id: number
   nome: string
   cidade: string
   uf: string
   totalLotes: number
   totalSensores: number
+}
+
+export interface PropriedadeVinculada {
+  id: number
+  nome: string
+  cidade: string
+  uf: string
+  status: StatusRegistro
 }
 
 export interface PropriedadeDetalhe extends PropriedadeResumo {
@@ -50,8 +59,8 @@ export interface PropriedadePayload {
   area: number
   cidade: string
   uf: string
-  latitude: number
-  longitude: number
+  latitude?: number
+  longitude?: number
 }
 
 export interface Cultura {
