@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:e2e": "vite --config vite.e2e.config.ts",
+    "e2e:open": "cypress open",
+    "e2e": "cypress run"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -33,6 +36,8 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "cypress": "^16.4.0",
+    "dotenv": "^18.0.10",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"

@@ -1,0 +1,162 @@
+[
+  {
+    "id": "CT01",
+    "perfil": null,
+    "funcionalidade": "Autenticação",
+    "cenario": "Bloquear painel sem sessão",
+    "entrada": "Abrir /painel sem token",
+    "esperado": "Redirecionar ao login e exibir o formulário"
+  },
+  {
+    "id": "CT02",
+    "perfil": null,
+    "funcionalidade": "Autenticação",
+    "cenario": "Validar login vazio",
+    "entrada": "Enviar formulário sem e-mail e senha",
+    "esperado": "Exibir validação e não enviar POST de login"
+  },
+  {
+    "id": "CT03",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Autenticação",
+    "cenario": "Rejeitar senha incorreta",
+    "entrada": "E-mail configurado com senha propositalmente inválida",
+    "esperado": "API retorna 401 e interface apresenta erro"
+  },
+  {
+    "id": "CT04",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Autenticação",
+    "cenario": "Entrar como produtor",
+    "entrada": "Credenciais do produtor configuradas localmente",
+    "esperado": "Login 200, perfil PRODUTOR, token em sessionStorage e painel visível"
+  },
+  {
+    "id": "CT05",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Sessão",
+    "cenario": "Preservar sessão ao recarregar",
+    "entrada": "Recarregar /painel após autenticação",
+    "esperado": "GET /auth/me retorna 200 e painel permanece acessível"
+  },
+  {
+    "id": "CT06",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Propriedades",
+    "cenario": "Listar propriedades reais",
+    "entrada": "Abrir /propriedades e buscar um nome recebido da API",
+    "esperado": "GET 200 e propriedade recebida aparece na interface"
+  },
+  {
+    "id": "CT07",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Propriedades",
+    "cenario": "Mostrar busca sem resultados",
+    "entrada": "Pesquisar termo inexistente",
+    "esperado": "Exibir Nenhuma propriedade encontrada"
+  },
+  {
+    "id": "CT08",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Propriedades",
+    "cenario": "Abrir edição da propriedade correta",
+    "entrada": "Clicar em Editar em uma propriedade real",
+    "esperado": "Navegar ao ID correto e preencher o nome retornado pela API"
+  },
+  {
+    "id": "CT09",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Formulários",
+    "cenario": "Validar propriedade incompleta",
+    "entrada": "Enviar cadastro vazio",
+    "esperado": "Exibir erros de nome, área e cidade; não enviar POST"
+  },
+  {
+    "id": "CT10",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Lotes",
+    "cenario": "Filtrar lotes por propriedade",
+    "entrada": "Selecionar a propriedade de um lote real",
+    "esperado": "GET /lotes retorna 200, filtro selecionado e lote correspondente aparece"
+  },
+  {
+    "id": "CT11",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Sensores",
+    "cenario": "Buscar sensor cadastrado",
+    "entrada": "Pesquisar código de sensor recebido da API",
+    "esperado": "GET /sensores retorna 200 e código aparece na lista"
+  },
+  {
+    "id": "CT12",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Leituras da API",
+    "cenario": "Consultar leituras reais de 24 horas",
+    "entrada": "Consultar leituras de um sensor do usuário com periodo=24h",
+    "esperado": "200 e estrutura de estatísticas, leituras e paginação; zero leituras é aceito"
+  },
+  {
+    "id": "CT13",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Permissões",
+    "cenario": "Restringir usuários ao ADMIN",
+    "entrada": "Abrir /usuarios e consultar GET /usuarios como produtor",
+    "esperado": "Interface informa acesso restrito e API retorna 403"
+  },
+  {
+    "id": "CT14",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Permissões da API",
+    "cenario": "Negar configuração IoT ao produtor",
+    "entrada": "POST /sensores/config como produtor com corpo vazio",
+    "esperado": "403 antes de validar dados ou gravar configuração"
+  },
+  {
+    "id": "CT15",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Sessão",
+    "cenario": "Sair da plataforma",
+    "entrada": "Menu da conta > Sair",
+    "esperado": "Logout 204, token removido e painel exige novo login"
+  },
+  {
+    "id": "CT16",
+    "perfil": "TECNICO",
+    "funcionalidade": "Permissões da interface",
+    "cenario": "Manter técnico em leitura",
+    "entrada": "Abrir propriedades e lotes como técnico",
+    "esperado": "Consultas 200 e ausência de botões de criar, editar e excluir"
+  },
+  {
+    "id": "CT17",
+    "perfil": "TECNICO",
+    "funcionalidade": "Configuração IoT",
+    "cenario": "Validar campos locais da configuração",
+    "entrada": "Clicar em Validar configuração com canal vazio",
+    "esperado": "Exibir canal inválido; não comprova conexão ou gravação ThingSpeak"
+  },
+  {
+    "id": "CT18",
+    "perfil": "ADMIN",
+    "funcionalidade": "Usuários",
+    "cenario": "Consultar usuários como administrador",
+    "entrada": "Abrir /usuarios com credenciais de ADMIN",
+    "esperado": "GET /usuarios 200 e listagem administrativa visível"
+  },
+  {
+    "id": "CT19",
+    "perfil": "ADMIN",
+    "funcionalidade": "Formulários",
+    "cenario": "Impedir usuário com cadastro vazio",
+    "entrada": "Abrir /usuarios/novo e enviar formulário vazio",
+    "esperado": "Campos inválidos visíveis sem POST /usuarios"
+  },
+  {
+    "id": "CT20",
+    "perfil": "PRODUTOR",
+    "funcionalidade": "Permissões da interface",
+    "cenario": "Restringir tela IoT ao produtor",
+    "entrada": "Abrir diretamente /sensores/config como produtor",
+    "esperado": "Redirecionar para /painel ou mostrar acesso restrito sem formulário de configuração"
+  }
+]

@@ -23,4 +23,17 @@ dist-ssr
 *.sln
 *.sw?
 
+# Configurações locais com credenciais
 .env
+.env.local
+.env.*.local
+cypress.env.json
+
+# Evidências geradas pelo Cypress
+cypress/resultados/
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+
+# Logs
+*.log
