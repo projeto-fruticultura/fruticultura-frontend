@@ -100,7 +100,7 @@ export default function Diagnostico() {
   const totalPropriedades = propriedades.length
 
   return (
-    <AppShell section="sensores">
+    <AppShell section="overview">
       <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8 xl:px-10">
         <h1 className="text-3xl font-semibold text-[#18251e]">
           Central de Diagnóstico
