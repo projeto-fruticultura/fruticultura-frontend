@@ -1,4 +1,4 @@
-import { LoaderCircle, Save } from 'lucide-react'
+import { Eye, EyeOff, LoaderCircle, Save } from 'lucide-react'
 import {
   useId,
   useState,
@@ -50,6 +50,7 @@ export function UsuarioForm({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [generalError, setGeneralError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [mostrarSenha, setMostrarSenha] = useState(false)
 
   function atualizar(campo: keyof UsuarioFormValores, valor: string) {
     setForm((current) => ({ ...current, [campo]: valor }))
@@ -143,7 +144,8 @@ export function UsuarioForm({
                 Dados do usuário
               </h2>
               <p className="mt-1 text-sm leading-6 text-[#6a776f]">
-                Informe as credenciais e o nível de acesso para o novo usuário da plataforma.
+                Informe as credenciais e o nível de acesso para o novo usuário
+                da plataforma.
               </p>
             </div>
 
@@ -158,7 +160,7 @@ export function UsuarioForm({
                 <input
                   id={fields.nome}
                   value={form.nome}
-                  onChange={(event) => atualizar('nome', event.target.value)}
+                  onChange={(event) => atualizar("nome", event.target.value)}
                   className="input-propriedade"
                   placeholder="Ex.: João da Silva"
                   aria-invalid={Boolean(errors.nome)}
@@ -176,7 +178,7 @@ export function UsuarioForm({
                   id={fields.email}
                   type="email"
                   value={form.email}
-                  onChange={(event) => atualizar('email', event.target.value)}
+                  onChange={(event) => atualizar("email", event.target.value)}
                   className="input-propriedade"
                   placeholder="Ex.: joao@valesafra.com"
                   aria-invalid={Boolean(errors.email)}
@@ -189,15 +191,35 @@ export function UsuarioForm({
                 error={errors.senha}
                 htmlFor={fields.senha}
               >
-                <input
-                  id={fields.senha}
-                  type="password"
-                  value={form.senha}
-                  onChange={(event) => atualizar('senha', event.target.value)}
-                  className="input-propriedade"
-                  placeholder="Mínimo de 8 caracteres"
-                  aria-invalid={Boolean(errors.senha)}
-                />
+                <div className="relative">
+                  <input
+                    id={fields.senha}
+                    type={mostrarSenha ? "text" : "password"}
+                    value={form.senha}
+                    onChange={(event) => atualizar("senha", event.target.value)}
+                    className="input-propriedade pr-12"
+                    placeholder="Mínimo de 8 caracteres"
+                    aria-invalid={Boolean(errors.senha)}
+                    autoComplete="new-password"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSenha((atual) => !atual)}
+                    className="absolute inset-y-0 right-0 flex items-center justify-center px-3 text-[#6a776f] transition hover:text-[#15693E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D] rounded-r-xl"
+                    aria-label={
+                      mostrarSenha ? "Ocultar senha" : "Mostrar senha"
+                    }
+                    title={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                    aria-controls={fields.senha}
+                  >
+                    {mostrarSenha ? (
+                      <EyeOff size={20} aria-hidden="true" />
+                    ) : (
+                      <Eye size={20} aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
               </Field>
 
               <Field
@@ -209,7 +231,7 @@ export function UsuarioForm({
                 <select
                   id={fields.perfil}
                   value={form.perfil}
-                  onChange={(event) => atualizar('perfil', event.target.value)}
+                  onChange={(event) => atualizar("perfil", event.target.value)}
                   className="input-propriedade"
                   aria-invalid={Boolean(errors.perfil)}
                 >
@@ -233,8 +255,11 @@ export function UsuarioForm({
             </p>
 
             <div className="mt-5 space-y-4">
-              <SummaryItem label="Nome" value={form.nome || 'Não informado'} />
-              <SummaryItem label="E-mail" value={form.email || 'Não informado'} />
+              <SummaryItem label="Nome" value={form.nome || "Não informado"} />
+              <SummaryItem
+                label="E-mail"
+                value={form.email || "Não informado"}
+              />
               <SummaryItem label="Perfil" value={form.perfil} />
             </div>
           </section>
@@ -246,17 +271,21 @@ export function UsuarioForm({
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#009B4D] px-5 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(0,155,77,.18)] transition hover:bg-[#008844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009B4D]/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? (
-                <LoaderCircle size={18} className="animate-spin" aria-hidden="true" />
+                <LoaderCircle
+                  size={18}
+                  className="animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 <Save size={18} aria-hidden="true" />
               )}
-              {saving ? 'Salvando...' : submitLabel}
+              {saving ? "Salvando..." : submitLabel}
             </button>
           </div>
         </aside>
       </div>
     </form>
-  )
+  );
 }
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
