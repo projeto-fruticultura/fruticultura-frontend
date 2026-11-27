@@ -1,13 +1,5 @@
-import {
-  ArrowLeft,
-  CalendarDays,
-  Edit3,
-  MapPin,
-  Ruler,
-  Trash2,
-  X,
-} from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { AppShell, PageBreadcrumb } from '@/components/app/AppShell'
@@ -82,6 +74,18 @@ export default function DetalhePropriedade() {
     }
   }
 
+  const latNumero = Number(item?.latitude)
+  const lngNumero = Number(item?.longitude)
+  const coordenadasValidas =
+    item !== null &&
+    item.latitude !== null &&
+    item.latitude !== undefined &&
+    item.longitude !== null &&
+    item.longitude !== undefined &&
+    Number.isFinite(latNumero) &&
+    Number.isFinite(lngNumero) &&
+    !(latNumero === 0 && lngNumero === 0)
+
   return (
     <AppShell section="properties">
       <div className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8 xl:px-10">
@@ -91,14 +95,6 @@ export default function DetalhePropriedade() {
             { label: item?.nome ?? 'Detalhes' },
           ]}
         />
-
-        <Link
-          to="/propriedades"
-          className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#15693E] transition hover:text-[#009B4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009B4D]"
-        >
-          <ArrowLeft size={17} aria-hidden="true" />
-          Voltar para propriedades
-        </Link>
 
         {loading ? (
           <div className="grid min-h-[420px] place-items-center rounded-[24px] border border-[#e1e7e3] bg-white shadow-sm">
@@ -113,48 +109,41 @@ export default function DetalhePropriedade() {
           <FeedbackMessage variant="error">{error}</FeedbackMessage>
         ) : item ? (
           <>
+            {/* Cabeçalho padronizado */}
             <section className="overflow-hidden rounded-[24px] border border-[#e1e7e3] bg-white shadow-sm">
               <div className="flex flex-col gap-5 border-l-[7px] border-[#009B4D] px-5 py-6 sm:px-7 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-start gap-4">
-
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h1 className="text-[clamp(2rem,3vw,2.75rem)] font-semibold tracking-[-0.04em] text-[#18251e]">
-                        {item.nome}
-                      </h1>
-                      <span className="rounded-full bg-[#edf7f1] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#15693E]">
-                        {item.status}
-                      </span>
-                    </div>
-
-                    <p className="mt-2 flex items-center gap-1.5 text-sm text-[#68756d]">
-                      <MapPin
-                        size={16}
-                        className="shrink-0 text-[#009B4D]"
-                        aria-hidden="true"
-                      />
-                      {item.cidade} - {item.uf}
-                    </p>
+                <div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h1 className="text-[clamp(2rem,3vw,2.75rem)] font-semibold tracking-[-0.04em] text-[#18251e]">
+                      {item.nome}
+                    </h1>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider ${getStatusStyle(item.status)}`}
+                    >
+                      {formatStatus(item.status)}
+                    </span>
                   </div>
+
+                  <p className="mt-2 text-sm text-[#68756d]">
+                    {item.cidade} - {item.uf} · Unidade #{item.id}
+                  </p>
                 </div>
 
                 {!somenteLeitura && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-2.5">
                     <Link
                       to={`/propriedades/${item.id}/editar`}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#d8e3dc] bg-white px-4 text-sm font-semibold text-[#15693E] transition hover:bg-[#f1f8f4]"
+                      className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#D9A31A] bg-white px-5 text-sm font-semibold text-[#9A7000] transition hover:bg-[#FFF9E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D9A31A]/40"
                     >
-                      <Edit3 size={16} aria-hidden="true" />
-                      Editar
+                      Editar propriedade
                     </Link>
 
                     <button
                       type="button"
                       onClick={() => setConfirmOpen(true)}
                       disabled={deleting}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                      className="inline-flex min-h-11 items-center justify-center rounded-xl border border-red-200 bg-white px-5 text-sm font-semibold text-red-600 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                     >
-                      <Trash2 size={16} aria-hidden="true" />
                       {deleting ? 'Excluindo...' : 'Excluir'}
                     </button>
                   </div>
@@ -168,66 +157,161 @@ export default function DetalhePropriedade() {
               </div>
             ) : null}
 
-            <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,.9fr)]">
-              <div className="space-y-5">
-                <section className="rounded-[24px] border border-[#e0e7e2] bg-white p-5 shadow-sm sm:p-6">
-                  <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#1c2922]">
-                    Resumo da propriedade
-                  </h2>
-                  <dl className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <Detail
-                      label="Área"
-                      value={`${item.area} ha`}
-                      icon={<Ruler size={18} aria-hidden="true" />}
-                    />
-                    <Detail label="Lotes" value={String(item.totalLotes)} />
-                    <Detail
-                      label="Sensores"
-                      value={String(item.totalSensores)}
-                    />
-                    <Detail label="Latitude" value={String(item.latitude)} />
-                    <Detail label="Longitude" value={String(item.longitude)} />
-                    <Detail
-                      label="Atualizado em"
-                      value={formatDate(item.atualizadoEm)}
-                      icon={<CalendarDays size={18} aria-hidden="true" />}
-                    />
-                  </dl>
-                </section>
+            {/* Grade principal em duas colunas */}
+            <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(440px,1.12fr)]">
+              {/* Coluna esquerda: indicadores e metadados estruturados */}
+              <div className="space-y-6">
+                <section className="rounded-[24px] border border-[#e1e7e3] bg-white p-5 shadow-sm sm:p-7">
+                  <div className="border-b border-[#edf2ee] pb-5">
+                    <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#18251e]">
+                      Resumo da unidade produtiva
+                    </h2>
+                    <p className="mt-1 text-sm leading-6 text-[#68756d]">
+                      Dimensão territorial, estrutura operacional e referência
+                      geográfica cadastrada.
+                    </p>
+                  </div>
 
-                <section className="rounded-[24px] border border-[#e0e7e2] bg-white p-5 shadow-sm sm:p-6">
-                  <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#1c2922]">
-                    Informações do cadastro
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-[#69766e]">
-                    Criada em {formatDate(item.criadoEm)}. Registro vinculado ao
-                    usuário #{item.usuarioId}.
-                  </p>
+                  {/* Grupo 1: Indicadores principais */}
+                  <div className="mt-5 space-y-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#76847c]">
+                      Capacidade e monitoramento
+                    </p>
+
+                    <dl className="grid gap-3.5 sm:grid-cols-3">
+                      <MetricCard
+                        label="Área total"
+                        value={`${formatArea(item.area)} ha`}
+                      />
+                      <MetricCard
+                        label="Lotes"
+                        value={String(item.totalLotes)}
+                      />
+                      <MetricCard
+                        label="Sensores"
+                        value={String(item.totalSensores)}
+                      />
+                    </dl>
+                  </div>
+
+                  {/* Grupo 2: Georreferenciamento */}
+                  <div className="mt-6 space-y-3 border-t border-[#edf2ee] pt-5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#76847c]">
+                        Georreferenciamento
+                      </p>
+
+                      {item.coordenadasEstimadasUf === true ? (
+                        <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                          Referência estimada por UF
+                        </span>
+                      ) : coordenadasValidas ? (
+                        <span className="rounded-full bg-[#edf7f1] px-2.5 py-0.5 text-[11px] font-semibold text-[#15693E]">
+                          Coordenadas vinculadas
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <dl className="grid gap-3.5 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-[#e6ede9] bg-[#f8faf9] px-4 py-3.5">
+                        <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#76847c]">
+                          Latitude
+                        </dt>
+                        <dd className="mt-1 font-mono text-sm font-semibold tabular-nums text-[#18251e]">
+                          {coordenadasValidas ? latNumero.toFixed(6) : '—'}
+                        </dd>
+                      </div>
+
+                      <div className="rounded-2xl border border-[#e6ede9] bg-[#f8faf9] px-4 py-3.5">
+                        <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#76847c]">
+                          Longitude
+                        </dt>
+                        <dd className="mt-1 font-mono text-sm font-semibold tabular-nums text-[#18251e]">
+                          {coordenadasValidas ? lngNumero.toFixed(6) : '—'}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+
+                  {/* Grupo 3: Histórico do registro */}
+                  <div className="mt-6 border-t border-[#edf2ee] pt-5">
+                    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#76847c]">
+                      Histórico do cadastro
+                    </p>
+
+                    <dl className="divide-y divide-[#edf2ee] rounded-2xl border border-[#e6ede9] bg-[#fbfcfb] px-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                        <dt className="text-[#68756d]">Data de cadastro</dt>
+                        <dd className="font-semibold text-[#23322a]">
+                          {formatDate(item.criadoEm)}
+                        </dd>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                        <dt className="text-[#68756d]">Última atualização</dt>
+                        <dd className="font-semibold text-[#23322a]">
+                          {formatDate(item.atualizadoEm)}
+                        </dd>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                        <dt className="text-[#68756d]">Responsável vinculado</dt>
+                        <dd className="font-mono text-xs font-semibold text-[#23322a]">
+                          Usuário #{item.usuarioId}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
                 </section>
               </div>
 
-              <section className="rounded-[24px] border border-[#e0e7e2] bg-white p-5 shadow-sm sm:p-6">
-                <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#1c2922]">
-                  Localização
-                </h2>
-                <p className="mt-1 mb-5 text-sm leading-6 text-[#69766e]">
-                  Prévia da posição geográfica cadastrada.
-                </p>
-                {item.coordenadasEstimadasUf === true ? (
-                  <p className="mb-4 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">Coordenadas estimadas por região</p>
-                ) : null}
-                <PropertyLocationPreview
-                  latitude={item.latitude}
-                  longitude={item.longitude}
-                  cidade={item.cidade}
-                  uf={item.uf}
-                />
-              </section>
+              {/* Coluna direita: mapa ampliado */}
+              <aside>
+                <section className="rounded-[24px] border border-[#e1e7e3] bg-white p-5 shadow-sm sm:p-6">
+                  <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#18251e]">
+                        Localização no mapa
+                      </h2>
+                      <p className="mt-0.5 text-sm leading-6 text-[#68756d]">
+                        {item.cidade} - {item.uf}
+                      </p>
+                    </div>
+
+                    {coordenadasValidas ? (
+                      <span className="rounded-full border border-[#d6e8dd] bg-[#f2f9f5] px-3 py-1 font-mono text-xs font-medium tabular-nums text-[#15693E]">
+                        {latNumero.toFixed(4)}, {lngNumero.toFixed(4)}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {item.coordenadasEstimadasUf === true ? (
+                    <p className="mb-4 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3.5 py-2.5 text-xs leading-5 text-amber-900">
+                      Coordenadas estimadas pela região da UF. Você pode
+                      ajustar o ponto exato da propriedade na edição.
+                    </p>
+                  ) : null}
+
+                  <PropertyLocationPreview
+                    latitude={item.latitude}
+                    longitude={item.longitude}
+                    cidade={item.cidade}
+                    uf={item.uf}
+                    className="h-[520px] sm:h-[620px] lg:h-[680px]"
+                  />
+
+                  <p className="mt-3.5 text-xs text-[#68756d]">
+                    Posição geográfica utilizada para monitoramento climático e
+                    planejamento logístico.
+                  </p>
+                </section>
+              </aside>
             </div>
           </>
         ) : null}
       </div>
 
+      {/* Modal de confirmação de exclusão */}
       {confirmOpen && item ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[1px]"
@@ -285,28 +369,44 @@ export default function DetalhePropriedade() {
   )
 }
 
-function Detail({
-  label,
-  value,
-  icon,
-}: {
-  label: string
-  value: string
-  icon?: ReactNode
-}) {
+function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-[#f6f9f7] p-4">
-      <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#7b887f]">
-        {icon}
+    <div className="rounded-2xl border border-[#e6ede9] bg-[#f8faf9] p-4">
+      <dt className="text-[11px] font-semibold uppercase tracking-[0.11em] text-[#76847c]">
         {label}
       </dt>
-      <dd className="mt-2 text-base font-semibold text-[#29372f]">{value}</dd>
+      <dd className="mt-1.5 text-xl font-semibold tracking-[-0.02em] tabular-nums text-[#18251e]">
+        {value}
+      </dd>
     </div>
   )
+}
+
+function formatArea(value: string | number) {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return String(value)
+  return new Intl.NumberFormat('pt-BR', {
+    maximumFractionDigits: 2,
+  }).format(num)
 }
 
 function formatDate(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(date)
+}
+
+function formatStatus(status: string) {
+  const normalized = status.trim().toUpperCase()
+  if (normalized === 'ATIVA') return 'Ativa'
+  if (normalized === 'INATIVA') return 'Inativa'
+  return status
+}
+
+function getStatusStyle(status: string) {
+  const normalized = status.trim().toUpperCase()
+  if (normalized === 'INATIVA') {
+    return 'bg-slate-100 text-slate-700'
+  }
+  return 'bg-[#edf7f1] text-[#15693E]'
 }

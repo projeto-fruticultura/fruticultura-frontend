@@ -1,4 +1,3 @@
-import { Cpu } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -71,10 +70,6 @@ export default function EditarSensor() {
         <section className="mb-6 overflow-hidden rounded-[24px] border border-[#e1e7e3] bg-white shadow-sm">
           <div className="border-l-[7px] border-[#009B4D] px-5 py-6 sm:px-7">
             <div className="flex items-start gap-4">
-              <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#edf7f1] text-[#15693E] sm:flex">
-                <Cpu size={22} aria-hidden="true" />
-              </span>
-
               <div>
                 <h1 className="text-[clamp(2rem,3vw,2.75rem)] font-semibold tracking-[-0.04em] text-[#18251e]">
                   Editar sensor
@@ -100,7 +95,6 @@ export default function EditarSensor() {
             Seu perfil não tem permissão para editar sensores.
           </FeedbackMessage>
         ) : sensor ? (
-          <section className="overflow-hidden rounded-[24px] border border-[#e1e7e3] bg-white shadow-sm">
             <SensorForm
               submitLabel="Salvar alterações"
               onSubmit={handleSubmit}
@@ -112,7 +106,6 @@ export default function EditarSensor() {
                 loteId: sensor.loteId,
               }}
             />
-          </section>
         ) : null}
       </div>
     </AppShell>

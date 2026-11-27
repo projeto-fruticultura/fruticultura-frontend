@@ -1,4 +1,3 @@
-import { Cpu } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { AppShell, PageBreadcrumb } from '@/components/app/AppShell'
@@ -13,7 +12,7 @@ export default function NovoSensor() {
   const { usuario } = useAuth()
 
   async function handleSubmit(payload: SensorPayload) {
-    // Erros (inclusive o 409 de codigo repetido) sobem para o SensorForm, que mostra a mensagem.
+    // Erros (inclusive o 409 de código repetido) sobem para o SensorForm, que mostra a mensagem.
     await sensorService.criar(payload)
     navigate('/sensores', { replace: true })
   }
@@ -24,39 +23,32 @@ export default function NovoSensor() {
         <PageBreadcrumb
           items={[
             { label: 'Sensores', to: '/sensores' },
-            { label: 'Adicionar novo sensor' },
+            { label: 'Novo sensor' },
           ]}
         />
 
+        {/* Cabeçalho padronizado */}
         <section className="mb-6 overflow-hidden rounded-[24px] border border-[#e1e7e3] bg-white shadow-sm">
           <div className="border-l-[7px] border-[#009B4D] px-5 py-6 sm:px-7">
-            <div className="flex items-start gap-4">
-              <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#edf7f1] text-[#15693E] sm:flex">
-                <Cpu size={22} aria-hidden="true" />
-              </span>
+            <h1 className="text-[clamp(2rem,3vw,2.75rem)] font-semibold tracking-[-0.04em] text-[#18251e]">
+              Adicionar novo sensor
+            </h1>
 
-              <div>
-                <h1 className="text-[clamp(2rem,3vw,2.75rem)] font-semibold tracking-[-0.04em] text-[#18251e]">
-                  Adicionar novo sensor
-                </h1>
-
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#68756d]">
-                  Cadastre um novo sensor para realizar o monitoramento da
-                  produção.
-                </p>
-              </div>
-            </div>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#68756d]">
+              Cadastre um sensor e vincule-o a um lote para acompanhar as
+              medições climáticas.
+            </p>
           </div>
         </section>
 
         {podeEscrever(usuario?.perfil) ? (
-          <section className="overflow-hidden rounded-[24px] border border-[#e1e7e3] bg-white shadow-sm">
-            <SensorForm submitLabel="Cadastrar Sensor" onSubmit={handleSubmit} />
-          </section>
+            <SensorForm submitLabel="Cadastrar sensor" onSubmit={handleSubmit} />
         ) : (
-          <FeedbackMessage variant="info">
-            Seu perfil não tem permissão para cadastrar sensores.
-          </FeedbackMessage>
+          <div className="rounded-[24px] border border-[#e1e7e3] bg-white p-5 shadow-sm sm:p-7">
+            <FeedbackMessage variant="info">
+              Seu perfil não tem permissão para cadastrar sensores.
+            </FeedbackMessage>
+          </div>
         )}
       </div>
     </AppShell>

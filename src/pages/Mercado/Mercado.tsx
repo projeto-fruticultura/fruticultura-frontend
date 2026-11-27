@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { RefreshCw, TrendingUp } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from "react";
+import { RefreshCw, TrendingUp } from "lucide-react";
 import {
   Line,
   LineChart,
@@ -8,104 +8,104 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts'
-import { AppShell } from '@/components/app/AppShell'
+} from "recharts";
+import { AppShell } from "@/components/app/AppShell";
 import {
   Campo,
   EstadoVazio,
   botaoSecundario,
   campo,
   cartao,
-} from '@/components/app/produtor/ProdutorUi'
-import { FeedbackMessage } from '@/components/ui/FeedbackMessage'
+} from "@/components/app/produtor/ProdutorUi";
+import { FeedbackMessage } from "@/components/ui/FeedbackMessage";
 import {
   formatarData,
   formatarDataHora,
   formatarMoeda,
   formatarNumero,
-} from '@/lib/formatar'
-import { mediaComparavel } from '@/lib/indicadoresProdutor'
+} from "@/lib/formatar";
+import { mediaComparavel } from "@/lib/indicadoresProdutor";
 import {
   LIMITE_COTACOES,
   PRODUTOS_MERCADO,
   nomeSerie,
   serieComparavel,
-} from '@/lib/seriesMercado'
-import { UFS } from '@/lib/ufs'
-import { ApiError } from '@/services/api'
-import { precoService } from '@/services/precoService'
-import type { PrecoResposta, ProdutoMercado } from '@/types/api'
+} from "@/lib/seriesMercado";
+import { UFS } from "@/lib/ufs";
+import { ApiError } from "@/services/api";
+import { precoService } from "@/services/precoService";
+import type { PrecoResposta, ProdutoMercado } from "@/types/api";
 
-const PERIODOS = [7, 30, 90] as const
+const PERIODOS = [7, 30, 90] as const;
 
 export default function Mercado() {
-  const [produto, setProduto] = useState<ProdutoMercado>('MANGA')
-  const [uf, setUf] = useState('PE')
-  const [periodo, setPeriodo] = useState<(typeof PERIODOS)[number]>(30)
-  const [serie, setSerie] = useState('')
-  const [dados, setDados] = useState<PrecoResposta | null>(null)
-  const [carregando, setCarregando] = useState(true)
-  const [erro, setErro] = useState('')
-  const [versao, setVersao] = useState(0)
-  const pedido = useRef(0)
+  const [produto, setProduto] = useState<ProdutoMercado>("MANGA");
+  const [uf, setUf] = useState("PE");
+  const [periodo, setPeriodo] = useState<(typeof PERIODOS)[number]>(30);
+  const [serie, setSerie] = useState("");
+  const [dados, setDados] = useState<PrecoResposta | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [versao, setVersao] = useState(0);
+  const pedido = useRef(0);
 
   useEffect(() => {
-    const atual = ++pedido.current
+    const atual = ++pedido.current;
     // Primeiro descarta dados da seleção anterior, para não mostrar uma cotação incorreta enquanto consulta.
-    setCarregando(true)
-    setErro('')
-    setDados(null)
-    setSerie('')
+    setCarregando(true);
+    setErro("");
+    setDados(null);
+    setSerie("");
     void precoService
       .consultar(produto, uf, LIMITE_COTACOES)
       .then((resposta) => {
-        if (pedido.current === atual) setDados(resposta)
+        if (pedido.current === atual) setDados(resposta);
       })
       .catch((error: unknown) => {
-        if (pedido.current !== atual) return
+        if (pedido.current !== atual) return;
         if (error instanceof ApiError && error.status === 503) {
           setErro(
-            'A fonte de preços está temporariamente indisponível e não existe uma cotação em cache.',
-          )
+            "A fonte de preços está temporariamente indisponível e não existe uma cotação em cache.",
+          );
         } else {
           setErro(
             error instanceof Error
               ? error.message
-              : 'Não foi possível consultar as cotações.',
-          )
+              : "Não foi possível consultar as cotações.",
+          );
         }
       })
       .finally(() => {
-        if (pedido.current === atual) setCarregando(false)
-      })
+        if (pedido.current === atual) setCarregando(false);
+      });
     return () => {
-      pedido.current += 1
-    }
-  }, [produto, uf, versao])
+      pedido.current += 1;
+    };
+  }, [produto, uf, versao]);
 
   const series = useMemo(
     () => (dados ? serieComparavel(dados, periodo) : []),
     [dados, periodo],
-  )
-  const grupo = series.find((s) => s.chave === serie) ?? series[0]
-  const ultima = grupo?.registros[grupo.registros.length - 1]
+  );
+  const grupo = series.find((s) => s.chave === serie) ?? series[0];
+  const ultima = grupo?.registros[grupo.registros.length - 1];
   const variacao =
     ultima && grupo
       ? mediaComparavel(
           ultima.preco,
           grupo.registros.map((r) => r.preco),
         )
-      : null
+      : null;
   const media =
     grupo && grupo.registros.length > 0
       ? grupo.registros.reduce((s, r) => s + r.preco, 0) /
         grupo.registros.length
-      : null
+      : null;
   const pontos =
     grupo?.registros.map((r) => ({
       data: formatarData(r.data),
       preco: r.preco,
-    })) ?? []
+    })) ?? [];
 
   return (
     <AppShell section="mercado">
@@ -140,8 +140,8 @@ export default function Mercado() {
               <RefreshCw
                 size={16}
                 aria-hidden="true"
-                className={carregando ? 'animate-spin' : ''}
-              />{' '}
+                className={carregando ? "animate-spin" : ""}
+              />{" "}
               Atualizar
             </button>
           </div>
@@ -180,8 +180,10 @@ export default function Mercado() {
                 className={campo}
                 value={periodo}
                 onChange={(e) => {
-                  setPeriodo(Number(e.target.value) as (typeof PERIODOS)[number])
-                  setSerie('')
+                  setPeriodo(
+                    Number(e.target.value) as (typeof PERIODOS)[number],
+                  );
+                  setSerie("");
                 }}
               >
                 {PERIODOS.map((dias) => (
@@ -195,7 +197,7 @@ export default function Mercado() {
             <Campo rotulo="Série / CEASA">
               <select
                 className={campo}
-                value={grupo?.chave ?? ''}
+                value={grupo?.chave ?? ""}
                 disabled={series.length === 0}
                 onChange={(e) => setSerie(e.target.value)}
               >
@@ -203,12 +205,12 @@ export default function Mercado() {
                   <option value="">Nenhuma série encontrada</option>
                 ) : (
                   series.map((s) => {
-                    const referencia = s.registros[s.registros.length - 1]
+                    const referencia = s.registros[s.registros.length - 1];
                     return (
                       <option value={s.chave} key={s.chave}>
                         {nomeSerie(referencia)}
                       </option>
-                    )
+                    );
                   })
                 )}
               </select>
@@ -232,8 +234,23 @@ export default function Mercado() {
         ) : !dados || !ultima || !grupo ? (
           <div className="mt-4">
             <EstadoVazio>
-              Sem cotação no período selecionado. Tente outro produto, UF ou
-              intervalo.
+              <span className="flex flex-col items-center justify-center gap-5 py-2 text-center sm:flex-row sm:gap-8 sm:text-left">
+                <img
+                  src="/assets/Search-vector.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-40 w-56 shrink-0 select-none object-contain sm:h-44 sm:w-60"
+                />
+                <span className="max-w-md">
+                  <span className="block text-base font-semibold text-[#1d2b23] sm:text-lg">
+                    Nenhuma cotação encontrada
+                  </span>
+                  <span className="mt-1.5 block text-sm leading-6 text-[#68756d]">
+                    Sem cotação no período selecionado. Tente outro produto, UF
+                    ou intervalo.
+                  </span>
+                </span>
+              </span>
             </EstadoVazio>
           </div>
         ) : (
@@ -269,7 +286,7 @@ export default function Mercado() {
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-[#1b2821]">
                   {media === null || grupo.registros.length < 2
-                    ? '—'
+                    ? "—"
                     : formatarMoeda(media)}
                 </p>
                 <p className="mt-1 text-xs text-[#6f7c74]">
@@ -284,23 +301,26 @@ export default function Mercado() {
                 <p
                   className={`mt-2 text-2xl font-semibold ${
                     variacao !== null && variacao < 0
-                      ? 'text-red-700'
-                      : 'text-[#145a37]'
+                      ? "text-red-700"
+                      : "text-[#145a37]"
                   }`}
                 >
                   {variacao === null
-                    ? '—'
-                    : `${variacao >= 0 ? '+' : ''}${formatarNumero(variacao, 2)}%`}
+                    ? "—"
+                    : `${variacao >= 0 ? "+" : ""}${formatarNumero(variacao, 2)}%`}
                 </p>
                 <p className="mt-1 text-xs text-[#6f7c74]">
                   {variacao === null
-                    ? 'Histórico comparável insuficiente.'
-                    : 'Mesmo produto, variedade, CEASA, UF e unidade.'}
+                    ? "Histórico comparável insuficiente."
+                    : "Mesmo produto, variedade, CEASA, UF e unidade."}
                 </p>
               </article>
             </section>
 
-            <section className={`${cartao} mt-4`} aria-labelledby="grafico-mercado">
+            <section
+              className={`${cartao} mt-4`}
+              aria-labelledby="grafico-mercado"
+            >
               <h2
                 id="grafico-mercado"
                 className="text-base font-semibold text-[#1d2b23]"
@@ -308,14 +328,14 @@ export default function Mercado() {
                 Histórico de preços
               </h2>
               <p className="mt-1 text-xs text-[#6f7c74]">
-                {ultima.produto} ·{' '}
-                {ultima.variedade || 'Variedade não informada'} · {ultima.ceasa}{' '}
+                {ultima.produto} ·{" "}
+                {ultima.variedade || "Variedade não informada"} · {ultima.ceasa}{" "}
                 / {ultima.uf} · por {ultima.unidade}
               </p>
               {pontos.length < 2 ? (
                 <p className="mt-5 text-sm text-[#6f7c74]">
-                  Histórico insuficiente para exibir a tendência. São necessárias
-                  pelo menos duas cotações.
+                  Histórico insuficiente para exibir a tendência. São
+                  necessárias pelo menos duas cotações.
                 </p>
               ) : (
                 <div
@@ -331,10 +351,10 @@ export default function Mercado() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2ece6" />
                       <XAxis
                         dataKey="data"
-                        tick={{ fill: '#6f7c74', fontSize: 11 }}
+                        tick={{ fill: "#6f7c74", fontSize: 11 }}
                       />
                       <YAxis
-                        tick={{ fill: '#6f7c74', fontSize: 11 }}
+                        tick={{ fill: "#6f7c74", fontSize: 11 }}
                         tickFormatter={(n) =>
                           `R$ ${formatarNumero(Number(n), 2)}`
                         }
@@ -343,7 +363,7 @@ export default function Mercado() {
                       <Tooltip
                         formatter={(value) => [
                           formatarMoeda(Number(value)),
-                          'Cotação',
+                          "Cotação",
                         ]}
                       />
                       <Line
@@ -359,7 +379,10 @@ export default function Mercado() {
               )}
             </section>
 
-            <section className={`${cartao} mt-4`} aria-labelledby="tabela-mercado">
+            <section
+              className={`${cartao} mt-4`}
+              aria-labelledby="tabela-mercado"
+            >
               <h2
                 id="tabela-mercado"
                 className="mb-4 text-base font-semibold text-[#1d2b23]"
@@ -392,7 +415,7 @@ export default function Mercado() {
                       <tr key={`${r.data}-${r.preco}-${indice}`}>
                         <td className="px-4 py-3">{formatarData(r.data)}</td>
                         <td className="px-4 py-3">
-                          {r.variedade ?? 'Não informada'}
+                          {r.variedade ?? "Não informada"}
                         </td>
                         <td className="px-4 py-3">
                           {r.ceasa} / {r.uf}
@@ -408,13 +431,13 @@ export default function Mercado() {
             </section>
 
             <p className="mt-4 text-xs leading-5 text-[#75827a]">
-              Fonte: {dados.fonte} · Origem: {dados.origem} · Consultado em:{' '}
-              {formatarDataHora(dados.consultadoEn)}. Preços são referências, não
-              ofertas de compra ou garantia de exportação.
+              Fonte: {dados.fonte} · Origem: {dados.origem} · Consultado em:{" "}
+              {formatarDataHora(dados.consultadoEn)}. Preços são referências,
+              não ofertas de compra ou garantia de exportação.
             </p>
           </>
         )}
       </main>
     </AppShell>
-  )
+  );
 }
