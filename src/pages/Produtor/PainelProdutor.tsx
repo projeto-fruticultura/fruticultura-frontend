@@ -4,6 +4,9 @@ import {
   AlertTriangle,
   CalendarDays,
   Cpu,
+  Droplets,
+  RefreshCw,
+  Thermometer,
   Leaf,
   MapPinned,
   ShieldAlert,
@@ -11,6 +14,8 @@ import {
   TrendingUp,
   Truck,
 } from 'lucide-react'
+import { MetricCard } from '@/components/app/dashboard/MetricCard'
+import { MonitoramentoProdutor } from '@/components/app/produtor/MonitoramentoProdutor'
 import { AppShell } from '@/components/app/AppShell'
 import {
   AlertasPainel,
@@ -18,7 +23,6 @@ import {
 } from '@/components/app/dashboard/AlertasPainel'
 import {
   EstadoVazio,
-  IndicadorProdutor,
   botaoSecundario,
   cartao,
 } from '@/components/app/produtor/ProdutorUi'
@@ -30,7 +34,6 @@ import { formatarData, formatarDataHora, formatarNumero } from '@/lib/formatar'
 import {
   alertasObservadosHoje,
   condicaoPropriedade,
-  leituraAntiga,
   type CondicaoPropriedade,
 } from '@/lib/indicadoresProdutor'
 import { alertaService } from '@/services/alertaService'
@@ -39,6 +42,7 @@ import {
   type AlertasDoDiaProdutor,
   type AreasProdutor,
   type DashboardResumo,
+  type DashboardMedias,
 } from '@/services/dashboardService'
 import { leituraService } from '@/services/leituraService'
 import { loteService } from '@/services/loteService'
@@ -90,12 +94,34 @@ const ESTADOS: Record<CondicaoPropriedade, { nome: string; classe: string }> = {
   },
 }
 
+function tempoAtrasoLeitura(dataHoraIso: string): string | null {
+  const instante = Date.parse(dataHoraIso)
+  if (!Number.isFinite(instante)) return null
+
+  const diffMs = Date.now() - instante
+  const UMA_HORA_MS = 60 * 60 * 1000
+  if (diffMs <= UMA_HORA_MS) return null
+
+  const horas = Math.floor(diffMs / UMA_HORA_MS)
+  if (horas < 24) {
+    return `Há ${horas}h`
+  }
+
+  const dias = Math.floor(horas / 24)
+  if (dias < 30) {
+    return dias === 1 ? 'Há 1 dia' : `Há ${dias} dias`
+  }
+
+  const meses = Math.floor(dias / 30)
+  return meses === 1 ? 'Há 1 mês' : `Há ${meses} meses`
+}
+
 export default function PainelProdutor() {
   const { usuario } = useAuth()
   const [dados, setDados] = useState<DadosPainel>(estadoInicial)
   const [carregando, setCarregando] = useState(true)
   const [propriedadeFiltro, setPropriedadeFiltro] = useState('')
-  const [recarregar] = useState(0)
+  const [recarregar, setRecarregar] = useState(0)
 
   useEffect(() => {
     let ativo = true
@@ -142,6 +168,7 @@ export default function PainelProdutor() {
   const [indicadores, setIndicadores] = useState<{
     chave: string
     resumo: DashboardResumo | null
+    medias: DashboardMedias | null
     areas: AreasProdutor | null
     alertasDoDia: AlertasDoDiaProdutor | null
   }>()
@@ -153,13 +180,20 @@ export default function PainelProdutor() {
       : undefined
     void Promise.allSettled([
       dashboardService.resumo({ propriedadeId }),
+      dashboardService.medias({
+        propriedadeId,
+        agrupar: 'hora',
+        de: new Date(Date.now() - 86400000).toISOString(),
+        ate: new Date().toISOString(),
+      }),
       dashboardService.areasProdutor(propriedadeId),
       dashboardService.alertasDoDiaProdutor(propriedadeId),
-    ] as const).then(([resumo, areas, alertasDoDia]) => {
+    ] as const).then(([resumo, medias, areas, alertasDoDia]) => {
       if (ativo)
         setIndicadores({
           chave: chaveConsulta,
           resumo: resumo.status === 'fulfilled' ? resumo.value : null,
+          medias: medias.status === 'fulfilled' ? medias.value : null,
           areas: areas.status === 'fulfilled' ? areas.value : null,
           alertasDoDia:
             alertasDoDia.status === 'fulfilled' ? alertasDoDia.value : null,
@@ -198,9 +232,9 @@ export default function PainelProdutor() {
       ) ?? null
     : dados.alertas
   const ultimoInstante = indicadoresAtuais?.resumo?.ultimaLeitura?.dataHoraLeitura
-  const leituraEstaAntiga = Boolean(
-    ultimoInstante && leituraAntiga(ultimoInstante),
-  )
+  const atrasoLeitura = ultimoInstante
+    ? tempoAtrasoLeitura(ultimoInstante)
+    : null
   const sensoresSelecionados = new Set(sensores.map(({ id }) => id))
   const temLeitura = indicadoresAtuais?.resumo
     ? ultimoInstante != null
@@ -240,11 +274,11 @@ export default function PainelProdutor() {
           </div>
         </section>
 
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#dce4df] bg-white px-4 py-3.5 shadow-xs">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#dce4df] bg-white px-4 py-3.5 shadow-xs sm:px-5">
           <label className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#526158]">
-            Propriedade
+            <span>Propriedade</span>
             <select
-              className="min-h-10 min-w-[200px] rounded-xl border border-[#dce4df] bg-[#f6f8f7] px-3 text-[#35453c]"
+              className="min-h-10 min-w-[210px] rounded-xl border border-[#dce4df] bg-[#f6f8f7] px-3 text-sm font-medium text-[#35453c] transition focus:border-[#009B4D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#009B4D]/15"
               value={propriedadeFiltro}
               onChange={(e) => setPropriedadeFiltro(e.target.value)}
             >
@@ -257,28 +291,51 @@ export default function PainelProdutor() {
             </select>
           </label>
 
-          <div
-            className={`inline-flex flex-wrap items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-medium ${
-              leituraEstaAntiga
-                ? 'border-amber-200 bg-amber-50 text-amber-950'
-                : 'border-[#dce4df] bg-[#f6f8f7] text-[#35453c]'
-            }`}
-          >
-            <span className="font-semibold text-[#526158]">Última leitura:</span>
-            <span>
-              {!indicadoresAtuais
-                ? 'Carregando…'
-                : !indicadoresAtuais.resumo
-                  ? 'Indisponível'
-                  : ultimoInstante
-                    ? formatarDataHora(ultimoInstante)
-                    : 'Sem leituras'}
-            </span>
-            {leituraEstaAntiga ? (
-              <span className="rounded-full bg-amber-200/80 px-2 py-0.5 text-[11px] font-semibold text-amber-950">
-                Há mais de 60 min
+          <div className="flex flex-wrap items-center gap-2.5 sm:ml-auto">
+            <div
+              className={`inline-flex min-h-10 flex-wrap items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-medium ${
+                atrasoLeitura
+                  ? 'border-amber-200 bg-amber-50 text-amber-950'
+                  : 'border-[#e1e7e3] bg-[#f6f8f7] text-[#35453c]'
+              }`}
+            >
+              <span className="font-semibold text-[#526158]">
+                Última leitura:
               </span>
-            ) : null}
+              <span className="tabular-nums">
+                {!indicadoresAtuais
+                  ? 'Carregando…'
+                  : !indicadoresAtuais.resumo
+                    ? 'Indisponível'
+                    : ultimoInstante
+                      ? formatarDataHora(ultimoInstante)
+                      : 'Sem leituras'}
+              </span>
+              {atrasoLeitura ? (
+                <span className="rounded-full bg-amber-200/80 px-2 py-0.5 text-[11px] font-semibold text-amber-950">
+                  {atrasoLeitura}
+                </span>
+              ) : null}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setRecarregar((v) => v + 1)}
+              disabled={carregando || !indicadoresAtuais}
+              aria-label="Atualizar dados do painel"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-[#dce4df] bg-white px-3.5 py-2 text-xs font-semibold text-[#2d3a33] shadow-2xs transition hover:border-[#b8c7be] hover:bg-[#f6f8f7] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            >
+              <RefreshCw
+                size={14}
+                className={
+                  carregando || !indicadoresAtuais
+                    ? 'animate-spin text-[#009B4D]'
+                    : 'text-[#526158]'
+                }
+                aria-hidden="true"
+              />
+              <span>Atualizar</span>
+            </button>
           </div>
         </div>
 
@@ -306,38 +363,43 @@ export default function PainelProdutor() {
             Visão executiva
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <IndicadorProdutor
-              nome="Propriedades cadastradas"
-              valor={
-                carregando || dados.avisos.some((v) => v.includes('propriedades'))
+            <MetricCard
+              accent="bg-[#28d887]"
+              label="Propriedades cadastradas"
+              value={
+                carregando ||
+                dados.avisos.some((v) => v.includes('propriedades'))
                   ? '—'
                   : propriedades.length
               }
-              icone={Leaf}
+              icon={Leaf}
             />
-            <IndicadorProdutor
-              nome="Lotes"
-              valor={
+            <MetricCard
+              accent="bg-[#4aa7e8]"
+              label="Lotes"
+              value={
                 carregando || dados.avisos.some((v) => v.includes('lotes'))
                   ? '—'
                   : lotes.length
               }
-              icone={Sprout}
+              icon={Sprout}
             />
-            <IndicadorProdutor
-              nome="Sensores ativos"
-              valor={
+            <MetricCard
+              accent="bg-[#9858dd]"
+              label="Sensores ativos"
+              value={
                 carregando || dados.avisos.some((v) => v.includes('sensores'))
                   ? '—'
                   : sensores.filter((s) => s.status === 'ATIVO').length
               }
-              icone={Cpu}
+              icon={Cpu}
             />
-            <IndicadorProdutor
-              nome={
+            <MetricCard
+              accent="bg-[#f2a23d]"
+              label={
                 alertasDoDia ? 'Alertas do dia' : 'Alertas observados hoje'
               }
-              valor={
+              value={
                 !indicadoresAtuais
                   ? '—'
                   : alertasDoDia?.total ??
@@ -345,43 +407,83 @@ export default function PainelProdutor() {
                       ? alertasObservadosHoje(alertasFiltrados)
                       : '—')
               }
-              icone={AlertTriangle}
-              ajuda={
+              icon={AlertTriangle}
+              helper={
                 alertasDoDia
                   ? 'Episódios de risco registrados que ocorreram no dia, no horário de Recife.'
                   : 'Alertas das últimas leituras disponíveis.'
               }
             />
-            <IndicadorProdutor
-              nome="Área sob proteção"
-              valor={
+            <MetricCard
+              accent="bg-[#28d887]"
+              label="Área sob proteção"
+              value={
                 areas ? `${formatarNumero(areas.protecao, 2)} ha` : '—'
               }
-              icone={MapPinned}
-              ajuda="Todos os sensores ativos do lote têm leitura de até 60 min dentro da faixa da cultura."
+              icon={MapPinned}
+              helper="Todos os sensores ativos do lote têm leitura de até 60 min dentro da faixa da cultura."
             />
-            <IndicadorProdutor
-              nome="Área sob risco"
-              valor={areas ? `${formatarNumero(areas.risco, 2)} ha` : '—'}
-              icone={ShieldAlert}
-              ajuda="Ao menos um sensor ativo do lote tem leitura de até 60 min fora da faixa da cultura."
+            <MetricCard
+              accent="bg-[#ef4444]"
+              label="Área sob risco"
+              value={areas ? `${formatarNumero(areas.risco, 2)} ha` : '—'}
+              icon={ShieldAlert}
+              helper="Ao menos um sensor ativo do lote tem leitura de até 60 min fora da faixa da cultura."
             />
-            <IndicadorProdutor
-              nome="Área com dados insuficientes"
-              valor={
+            <MetricCard
+              accent="bg-[#94a3b8]"
+              label="Área com dados insuficientes"
+              value={
                 areas ? `${formatarNumero(areas.semDados, 2)} ha` : '—'
               }
-              icone={Leaf}
-              ajuda="Sem cobertura suficiente de leituras válidas e recentes para classificar o lote."
+              icon={Leaf}
+              helper="Sem cobertura suficiente de leituras válidas e recentes para classificar o lote."
             />
-            <IndicadorProdutor
-              nome="Próxima colheita estimada"
-              valor={dataColheita ? formatarData(dataColheita) : '—'}
-              icone={CalendarDays}
-              ajuda="Estimativa cadastrada no lote; não é recomendação agronômica."
+            <MetricCard
+              accent="bg-[#168150]"
+              label="Próxima colheita estimada"
+              value={dataColheita ? formatarData(dataColheita) : '—'}
+              icon={CalendarDays}
+              helper="Estimativa cadastrada no lote; não é recomendação agronômica."
+            />
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <MetricCard
+              label="Temperatura média (últimas 24h)"
+              icon={Thermometer}
+              accent="bg-[#e056fd]"
+              value={
+                !indicadoresAtuais
+                  ? '—'
+                  : !indicadoresAtuais.resumo
+                    ? 'Indisponível'
+                    : indicadoresAtuais.resumo.temperaturaMedia == null
+                      ? 'Sem dados'
+                      : `${formatarNumero(indicadoresAtuais.resumo.temperaturaMedia)} °C`
+              }
+            />
+            <MetricCard
+              label="Umidade média (últimas 24h)"
+              icon={Droplets}
+              accent="bg-[#00d2d3]"
+              value={
+                !indicadoresAtuais
+                  ? '—'
+                  : !indicadoresAtuais.resumo
+                    ? 'Indisponível'
+                    : indicadoresAtuais.resumo.umidadeMedia == null
+                      ? 'Sem dados'
+                      : `${formatarNumero(indicadoresAtuais.resumo.umidadeMedia)}%`
+              }
             />
           </div>
         </section>
+
+        <MonitoramentoProdutor
+          carregando={!indicadoresAtuais}
+          medias={indicadoresAtuais?.medias ?? null}
+          areas={areas ?? null}
+        />
 
         <section
           className="mt-4 rounded-2xl border border-amber-200/90 bg-amber-50/40 p-1 shadow-xs"
@@ -446,7 +548,10 @@ export default function PainelProdutor() {
           />
         </section>
 
-        <section className={`${cartao} mt-4`} aria-labelledby="propriedades-produtor">
+        <section
+          className={`${cartao} mt-4`}
+          aria-labelledby="propriedades-produtor"
+        >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2
               id="propriedades-produtor"
