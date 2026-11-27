@@ -21,7 +21,6 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import Diagnostico from './Diagnostico'
 import { AppShell } from '@/components/app/AppShell'
 import { Button } from '@/components/ui/button'
 import { FeedbackMessage } from '@/components/ui/FeedbackMessage'
@@ -87,16 +86,6 @@ function obterEstiloTipoSensor(tipo: Sensor['tipo']) {
 }
 
 export default function Sensores() {
-  const { usuario } = useAuth()
-
-  if (usuario?.perfil === 'TECNICO') {
-    return <Diagnostico />
-  }
-
-  return <ListaSensores />
-}
-
-function ListaSensores() {
   const { usuario } = useAuth()
   const podeEditar = podeEscrever(usuario?.perfil)
 
@@ -418,8 +407,9 @@ function ListaSensores() {
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[#68756d]">
-                Cadastre e gerencie os sensores utilizados no monitoramento da
-                produção.
+                {podeEditar
+                  ? "Cadastre e gerencie os sensores utilizados no monitoramento da produção."
+                  : "Consulte os sensores utilizados no monitoramento da produção."}
               </p>
             </div>
 
@@ -452,10 +442,10 @@ function ListaSensores() {
 
               {!carregando && !erro ? (
                 <p className="mt-1 text-sm text-[#718078]">
-                  {sensoresFiltrados.length.toLocaleString('pt-BR')}{' '}
+                  {sensoresFiltrados.length.toLocaleString("pt-BR")}{" "}
                   {sensoresFiltrados.length === 1
-                    ? 'sensor ativo na rede'
-                    : 'sensores ativos na rede'}
+                    ? "sensor ativo na rede"
+                    : "sensores ativos na rede"}
                 </p>
               ) : null}
             </div>
@@ -472,8 +462,8 @@ function ListaSensores() {
                   type="search"
                   value={busca}
                   onChange={(e) => {
-                    setBusca(e.target.value)
-                    setPaginaAtual(1)
+                    setBusca(e.target.value);
+                    setPaginaAtual(1);
                   }}
                   placeholder="Buscar código, lote ou local..."
                   aria-label="Buscar sensor por código, lote ou localização"
@@ -483,8 +473,8 @@ function ListaSensores() {
                   <button
                     type="button"
                     onClick={() => {
-                      setBusca('')
-                      setPaginaAtual(1)
+                      setBusca("");
+                      setPaginaAtual(1);
                     }}
                     aria-label="Limpar busca"
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-[#7a8980] hover:bg-[#f3f6f4] hover:text-[#1f2d25]"
@@ -499,8 +489,8 @@ function ListaSensores() {
                 <select
                   value={filtroTipo}
                   onChange={(e) => {
-                    setFiltroTipo(e.target.value)
-                    setPaginaAtual(1)
+                    setFiltroTipo(e.target.value);
+                    setPaginaAtual(1);
                   }}
                   aria-label="Filtrar por tipo de sensor"
                   className="h-10 rounded-xl border border-[#d9e2db] bg-white px-3 text-sm font-medium text-[#334139] focus:border-[#009B4D] focus:outline-none focus:ring-4 focus:ring-[#009B4D]/15"
@@ -508,7 +498,7 @@ function ListaSensores() {
                   <option value="TODOS">Tipo: Todos</option>
                   {tiposDisponiveis.map((tipo) => (
                     <option key={tipo} value={tipo}>
-                      {rotuloTipoSensor(tipo as Sensor['tipo'])}
+                      {rotuloTipoSensor(tipo as Sensor["tipo"])}
                     </option>
                   ))}
                 </select>
@@ -519,8 +509,8 @@ function ListaSensores() {
                 <select
                   value={filtroLote}
                   onChange={(e) => {
-                    setFiltroLote(e.target.value)
-                    setPaginaAtual(1)
+                    setFiltroLote(e.target.value);
+                    setPaginaAtual(1);
                   }}
                   aria-label="Filtrar por lote"
                   className="h-10 max-w-full rounded-xl border border-[#d9e2db] bg-white px-3 text-sm font-medium text-[#334139] focus:border-[#009B4D] focus:outline-none focus:ring-4 focus:ring-[#009B4D]/15 sm:max-w-[200px]"
@@ -542,11 +532,11 @@ function ListaSensores() {
               >
                 <button
                   type="button"
-                  onClick={() => alterarModoExibicao('cards')}
+                  onClick={() => alterarModoExibicao("cards")}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition ${
-                    modoExibicao === 'cards'
-                      ? 'bg-white text-[#18251e] shadow-sm'
-                      : 'text-[#66746c] hover:text-[#18251e]'
+                    modoExibicao === "cards"
+                      ? "bg-white text-[#18251e] shadow-sm"
+                      : "text-[#66746c] hover:text-[#18251e]"
                   }`}
                 >
                   <LayoutGrid size={14} />
@@ -555,11 +545,11 @@ function ListaSensores() {
 
                 <button
                   type="button"
-                  onClick={() => alterarModoExibicao('lotes')}
+                  onClick={() => alterarModoExibicao("lotes")}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition ${
-                    modoExibicao === 'lotes'
-                      ? 'bg-white text-[#18251e] shadow-sm'
-                      : 'text-[#66746c] hover:text-[#18251e]'
+                    modoExibicao === "lotes"
+                      ? "bg-white text-[#18251e] shadow-sm"
+                      : "text-[#66746c] hover:text-[#18251e]"
                   }`}
                 >
                   <FolderTree size={14} />
@@ -568,11 +558,11 @@ function ListaSensores() {
 
                 <button
                   type="button"
-                  onClick={() => alterarModoExibicao('tabela')}
+                  onClick={() => alterarModoExibicao("tabela")}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition ${
-                    modoExibicao === 'tabela'
-                      ? 'bg-white text-[#18251e] shadow-sm'
-                      : 'text-[#66746c] hover:text-[#18251e]'
+                    modoExibicao === "tabela"
+                      ? "bg-white text-[#18251e] shadow-sm"
+                      : "text-[#66746c] hover:text-[#18251e]"
                   }`}
                 >
                   <List size={14} />
@@ -625,8 +615,10 @@ function ListaSensores() {
               </h3>
               <p className="mt-1 max-w-md text-sm text-[#68756d]">
                 {temFiltroAtivo
-                  ? 'Nenhum dispositivo corresponde aos filtros aplicados.'
-                  : 'Quando você cadastrar um sensor em um lote de uma de suas propriedades, ele aparece aqui.'}
+                  ? "Nenhum dispositivo corresponde aos filtros aplicados."
+                  : podeEditar
+                    ? "Quando você cadastrar um sensor em um lote de uma de suas propriedades, ele aparece aqui."
+                    : "Nenhum sensor foi cadastrado nas propriedades às quais você está vinculado."}
               </p>
               {temFiltroAtivo && (
                 <Button
@@ -642,7 +634,7 @@ function ListaSensores() {
             </div>
           ) : (
             <>
-              {modoExibicao === 'lotes' ? (
+              {modoExibicao === "lotes" ? (
                 <div className="mt-6 space-y-7">
                   {gruposPaginados.map((grupo) => (
                     <div key={grupo.id}>
@@ -654,18 +646,20 @@ function ListaSensores() {
                           {grupo.loteNome}
                         </h3>
                         <span className="rounded-full bg-[#f3f6f4] px-2.5 py-0.5 text-xs font-semibold text-[#5c6a62]">
-                          {grupo.itens.length}{' '}
-                          {grupo.itens.length === 1 ? 'sensor' : 'sensores'}
+                          {grupo.itens.length}{" "}
+                          {grupo.itens.length === 1 ? "sensor" : "sensores"}
                         </span>
                       </div>
 
                       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                        {grupo.itens.map((sensor) => renderCardHardware(sensor))}
+                        {grupo.itens.map((sensor) =>
+                          renderCardHardware(sensor),
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : modoExibicao === 'tabela' ? (
+              ) : modoExibicao === "tabela" ? (
                 <div className="mt-5 overflow-x-auto rounded-2xl border border-[#edf1ee]">
                   <table className="w-full border-collapse text-left">
                     <thead>
@@ -682,9 +676,8 @@ function ListaSensores() {
                     </thead>
                     <tbody className="divide-y divide-[#edf1ee] text-sm">
                       {sensoresPaginados.map((sensor) => {
-                        const { rotulo, Icone, bgIcone } = obterEstiloTipoSensor(
-                          sensor.tipo,
-                        )
+                        const { rotulo, Icone, bgIcone } =
+                          obterEstiloTipoSensor(sensor.tipo);
                         return (
                           <tr
                             key={sensor.id}
@@ -702,7 +695,10 @@ function ListaSensores() {
                                   aria-label={`Copiar código ${sensor.codigo}`}
                                 >
                                   {codigoCopiadoId === sensor.id ? (
-                                    <Check size={13} className="text-[#009B4D]" />
+                                    <Check
+                                      size={13}
+                                      className="text-[#009B4D]"
+                                    />
                                   ) : (
                                     <Copy size={13} />
                                   )}
@@ -724,7 +720,7 @@ function ListaSensores() {
                                 {sensor.lote.identificacao}
                               </p>
                               <p className="text-xs text-[#68756d]">
-                                {sensor.localizacao || 'Localização padrão'}
+                                {sensor.localizacao || "Localização padrão"}
                               </p>
                             </td>
 
@@ -761,42 +757,46 @@ function ListaSensores() {
                               </td>
                             )}
                           </tr>
-                        )
+                        );
                       })}
                     </tbody>
                   </table>
                 </div>
               ) : (
                 <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {sensoresPaginados.map((sensor) => renderCardHardware(sensor))}
+                  {sensoresPaginados.map((sensor) =>
+                    renderCardHardware(sensor),
+                  )}
                 </div>
               )}
 
               {/* Rodapé com Paginação */}
               <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t border-[#edf1ee] pt-4 text-xs text-[#68756d] sm:flex-row">
                 <p>
-                  Mostrando{' '}
+                  Mostrando{" "}
                   <strong className="font-semibold text-[#1f2d25]">
-                    {((paginaSegura - 1) * itensPorPagina + 1).toLocaleString('pt-BR')}
-                  </strong>{' '}
-                  a{' '}
+                    {((paginaSegura - 1) * itensPorPagina + 1).toLocaleString(
+                      "pt-BR",
+                    )}
+                  </strong>{" "}
+                  a{" "}
                   <strong className="font-semibold text-[#1f2d25]">
                     {Math.min(
                       paginaSegura * itensPorPagina,
                       totalItensPaginaveis,
-                    ).toLocaleString('pt-BR')}
-                  </strong>{' '}
-                  de{' '}
+                    ).toLocaleString("pt-BR")}
+                  </strong>{" "}
+                  de{" "}
                   <strong className="font-semibold text-[#1f2d25]">
-                    {totalItensPaginaveis.toLocaleString('pt-BR')}
-                  </strong>{' '}
-                  {modoExibicao === 'lotes'
+                    {totalItensPaginaveis.toLocaleString("pt-BR")}
+                  </strong>{" "}
+                  {modoExibicao === "lotes"
                     ? totalItensPaginaveis === 1
-                      ? 'lote'
-                      : 'lotes'
+                      ? "lote"
+                      : "lotes"
                     : totalItensPaginaveis === 1
-                      ? 'sensor'
-                      : 'sensores'}
+                      ? "sensor"
+                      : "sensores"}
                 </p>
 
                 {totalPaginas > 1 && (
@@ -806,9 +806,7 @@ function ListaSensores() {
                       variant="outline"
                       size="sm"
                       disabled={paginaSegura <= 1}
-                      onClick={() =>
-                        setPaginaAtual((p) => Math.max(1, p - 1))
-                      }
+                      onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
                       className="h-8 gap-1 px-2.5 text-xs"
                     >
                       <ChevronLeft size={14} />
@@ -816,8 +814,8 @@ function ListaSensores() {
                     </Button>
 
                     <span className="px-2 font-medium text-[#1f2d25]">
-                      Página {paginaSegura.toLocaleString('pt-BR')} de{' '}
-                      {totalPaginas.toLocaleString('pt-BR')}
+                      Página {paginaSegura.toLocaleString("pt-BR")} de{" "}
+                      {totalPaginas.toLocaleString("pt-BR")}
                     </span>
 
                     <Button
@@ -845,7 +843,7 @@ function ListaSensores() {
       <AlertDialog.Root
         open={sensorParaExcluir !== null}
         onOpenChange={(aberto) => {
-          if (!aberto && !excluindo) setSensorParaExcluir(null)
+          if (!aberto && !excluindo) setSensorParaExcluir(null);
         }}
       >
         <AlertDialog.Portal>
@@ -857,7 +855,7 @@ function ListaSensores() {
             </AlertDialog.Title>
 
             <AlertDialog.Description className="mt-3 text-sm leading-6 text-[#68756d]">
-              Tem certeza que deseja excluir o sensor{' '}
+              Tem certeza que deseja excluir o sensor{" "}
               <code className="rounded bg-[#f3f6f4] px-1.5 py-0.5 font-mono text-xs font-bold text-[#18251e]">
                 {sensorParaExcluir?.codigo}
               </code>
@@ -882,12 +880,12 @@ function ListaSensores() {
                 disabled={excluindo}
                 onClick={() => void confirmarExclusao()}
               >
-                {excluindo ? 'Excluindo...' : 'Excluir sensor'}
+                {excluindo ? "Excluindo..." : "Excluir sensor"}
               </Button>
             </div>
           </AlertDialog.Popup>
         </AlertDialog.Portal>
       </AlertDialog.Root>
     </AppShell>
-  )
+  );
 }

@@ -15,6 +15,7 @@ import EditarCultura from "@/pages/Culturas/EditarCultura";
 import Sensores from "@/pages/Sensores/Sensores";
 import NovoSensor from "@/pages/Sensores/NovoSensor";
 import EditarSensor from "@/pages/Sensores/EditarSensor";
+import Diagnostico from "@/pages/Sensores/Diagnostico";
 import Dashboard from "@/pages/Dashboard/Dashboard";
 import Lotes from "@/pages/Lotes/Lotes";
 import NovoLote from "@/pages/Lotes/NovoLote";
@@ -34,10 +35,19 @@ function RotaProdutor({ children }: { children: ReactNode }) {
   return usuario?.perfil === "PRODUTOR" ? children : <Navigate to="/painel" replace />;
 }
 
-// O perfil PRODUTOR recebe o painel específico sem alterar o Dashboard compartilhado.
+// Direciona cada perfil para sua respectiva visão geral.
 function PainelPorPerfil() {
   const { usuario } = useAuth();
-  return usuario?.perfil === "PRODUTOR" ? <PainelProdutor /> : <Dashboard />;
+
+  if (usuario?.perfil === "PRODUTOR") {
+    return <PainelProdutor />;
+  }
+
+  if (usuario?.perfil === "TECNICO") {
+    return <Diagnostico />;
+  }
+
+  return <Dashboard />;
 }
 
 export function AppRoutes() {

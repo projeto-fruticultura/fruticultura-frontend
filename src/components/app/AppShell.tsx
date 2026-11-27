@@ -30,7 +30,8 @@ interface AppShellProps {
     | "lotes"
     | "usuarios"
     | "logistica"
-    | "mercado";
+    | "mercado"
+    | "iot";
 }
 
 const baseNavItems = [
@@ -114,7 +115,7 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
         ? [
             {
               label: "Visão geral",
-              to: "/sensores",
+              to: "/painel",
               icon: LayoutDashboard,
               key: "overview" as const,
             },
@@ -129,6 +130,12 @@ export function AppShell({ children, section = "properties" }: AppShellProps) {
               to: "/lotes",
               icon: MapPinned,
               key: "lotes" as const,
+            },
+            {
+              label: "Sensores",
+              to: "/sensores",
+              icon: Cpu,
+              key: "sensores" as const,
             },
             {
               label: "Configuração IoT",

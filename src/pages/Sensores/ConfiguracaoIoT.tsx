@@ -140,7 +140,7 @@ function validarConfiguracao() {
 }
 
   return (
-    <AppShell section="sensores">
+    <AppShell section="iot">
       <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <section className="rounded-[24px] border border-[#e1e7e3] bg-white p-6 shadow-sm">
           <div className="flex items-center gap-3">
