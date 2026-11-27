@@ -8,7 +8,7 @@ import { UFS } from '@/lib/ufs'
 import { precoService } from '@/services/precoService'
 import type { PrecoResposta, ProdutoMercado } from '@/types/api'
 
-const PERIODO_DIAS = 30
+const PERIODO_DIAS = 90
 
 export function VariacaoMercado({ ufPropriedade, revisao }: { ufPropriedade?: string; revisao: number }) {
   const [produto, setProduto] = useState<ProdutoMercado>('MANGA')

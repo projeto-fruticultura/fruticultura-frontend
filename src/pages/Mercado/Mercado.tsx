@@ -41,7 +41,7 @@ const PERIODOS = [7, 30, 90] as const;
 export default function Mercado() {
   const [produto, setProduto] = useState<ProdutoMercado>("MANGA");
   const [uf, setUf] = useState("PE");
-  const [periodo, setPeriodo] = useState<(typeof PERIODOS)[number]>(30);
+  const [periodo, setPeriodo] = useState<(typeof PERIODOS)[number]>(90);
   const [serie, setSerie] = useState("");
   const [dados, setDados] = useState<PrecoResposta | null>(null);
   const [carregando, setCarregando] = useState(true);
