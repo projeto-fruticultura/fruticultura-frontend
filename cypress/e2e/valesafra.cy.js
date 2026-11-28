@@ -51,9 +51,13 @@ function interceptar(
 ) {
   // Somente observa as chamadas reais.
   // Não devolve fixtures ou respostas simuladas.
+  // Remove o If-None-Match para a API não responder 304 (sem corpo)
+  // e sempre devolver 200 com o conteúdo.
   cy.intercept({
     method,
     pathname: `/api${pathname}`,
+  }, req => {
+    delete req.headers['if-none-match']
   }).as(alias)
 }
 
